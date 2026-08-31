@@ -8,9 +8,9 @@ how those settings relate to—and differ from—reinforcement learning.
 
 A robot-learning dataset may contain
 
-$$
+```math
 D=\{(o_t,a_t,r_t,o_{t+1},d_t,m_t)\},
-$$
+```
 
 where $m_t$ is optional metadata such as task language, camera calibration,
 timestamps, episode ID, or robot embodiment.
@@ -35,10 +35,10 @@ small coherent one.
 **Behavior cloning** (BC) treats demonstration actions as labels. For a
 continuous action and deterministic policy, a simple objective is
 
-$$
+```math
 \min_\theta\ \mathbb{E}_{(o,a)\sim D}
 \left[\|\pi_\theta(o)-a\|_2^2\right].
-$$
+```
 
 Plain language: make the policy predict the demonstrator's action for each
 recorded observation.
@@ -88,9 +88,9 @@ collection must be engineered; a human may not label a 1 kHz recovery action.
 Instead of predicting one action, an **action-chunk** policy predicts a short
 sequence:
 
-$$
+```math
 \pi(o_t)\rightarrow(a_t,a_{t+1},\ldots,a_{t+H-1}).
-$$
+```
 
 Benefits can include temporal consistency and fewer high-level inference calls.
 But open-loop execution for the entire chunk delays correction. Practical
@@ -161,14 +161,14 @@ error can reinforce itself.
 Conservative Q-Learning (CQL) adds pressure for values of actions outside the
 dataset to be lower than values of observed actions. One conceptual form is
 
-$$
+```math
 \min_Q\ 
 \underbrace{L_{Bellman}(Q)}_{\text{fit transitions}}
 +\alpha\left(
 \underbrace{\mathbb{E}_{s,a\sim\mu}[Q(s,a)]}_{\text{candidate actions}}
 -\underbrace{\mathbb{E}_{s,a\sim D}[Q(s,a)]}_{\text{dataset actions}}
 \right).
-$$
+```
 
 $\mu$ is an action proposal distribution. The added term discourages the
 critic from assigning unjustified high value broadly.
@@ -195,9 +195,9 @@ explicit max over unseen actions.
 
 Policy extraction weights demonstrated actions approximately by
 
-$$
+```math
 w(s,a)=\exp(\beta(Q(s,a)-V(s))),
-$$
+```
 
 usually with clipping. Better-than-baseline dataset actions receive more
 weight.
@@ -229,9 +229,9 @@ Audit coverage along dimensions that matter physically:
 datasets with behavior mixtures and evaluation protocols. A normalized score
 commonly has the form
 
-$$
+```math
 100\frac{J_\pi-J_{random}}{J_{expert}-J_{random}}.
-$$
+```
 
 This makes scores more comparable within a benchmark, but the reference
 policies, environment version, termination handling, and dataset composition
@@ -320,3 +320,45 @@ Without provenance, “more data” can mean more untraceable error.
    are needed before it could support offline learning?
 
 Continue with [modern robot locomotion, adaptation, and sim-to-real research](15_modern_robot_locomotion_and_adaptation.md).
+
+## 14.15 Folded solutions
+
+<details>
+<summary>Show answers to Section 14.14</summary>
+
+1. Demonstrations may pass an obstacle on the left with steering $-1$ or on
+   the right with $+1$. Squared-error BC predicts their mean, zero, which can
+   drive directly into the obstacle. More context or a multimodal distribution
+   must represent the alternatives.
+2. After one 2 cm left error, the robot observes a state slightly outside the
+   expert path. BC was not trained to correct there, so it may produce another
+   error; after $n$ uncompensated steps the simple drift is $0.02n$ metres and
+   the observation distribution moves progressively farther from training.
+3. A chunk represents temporally coherent intent and reduces high-frequency
+   switching. A long open-loop chunk also delays reaction to a person,
+   collision risk, or changed contact. Receding-horizon execution and measured
+   chunk age balance these effects.
+4. Off-policy **online** RL reuses old data but can still gather new transitions
+   under evolving policies. Offline RL is restricted to a frozen dataset and
+   must avoid relying on actions absent from it.
+5. Function approximation can assign unrealistically high Q-values to unseen
+   state-action pairs. CQL penalizes such optimism explicitly; IQL improves
+   from in-dataset action/value structure without querying arbitrary unseen
+   actions in its main value update.
+6. Hold out an entire table to test scene transfer, hold out selected objects
+   on otherwise seen tables to test object transfer, and hold out one operator
+   to test demonstrator/style transfer. A final test can combine held-out table,
+   object, and operator; validation cases used for model selection must remain
+   separate from that test.
+7. The data omits pre-failure warning states, failed actions, recovery paths,
+   intervention thresholds, and the boundary between recoverable and unsafe.
+   A policy trained only on success cannot infer these merely from labels it
+   never saw.
+8. A Microduck log card needs the exact robot/task/commit/checkpoint, 61D field
+   order and normalization, 14D action transform, units/frames/rates/timestamps,
+   command process, randomization, resets, terminations, reward reconstruction,
+   episode IDs, quality/failure labels, and splits. For offline learning it also
+   needs next observations, terminal/truncation distinction, reproducible
+   rewards, coverage analysis, and license/provenance.
+
+</details>

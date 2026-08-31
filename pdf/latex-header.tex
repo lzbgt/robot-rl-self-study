@@ -1,0 +1,67 @@
+% PDF layout policy: readable prose, breakable URLs/code, and compact tables.
+\usepackage{microtype}
+\usepackage{xurl}
+\usepackage{bookmark}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{ragged2e}
+\usepackage{etoolbox}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{newunicodechar}
+
+% Noto Serif intentionally has a conservative text glyph set. Render the one
+% prose arrow used by architecture descriptions with the math font instead of
+% silently dropping it.
+\newunicodechar{→}{\ensuremath{\rightarrow}}
+
+\urlstyle{same}
+\setlength{\emergencystretch}{3em}
+\tolerance=1800
+\pretolerance=1000
+\hbadness=5000
+\widowpenalty=10000
+\clubpenalty=10000
+\displaywidowpenalty=10000
+
+% Code blocks may contain long paths, commands, and identifiers. Listings can
+% wrap those tokens without reducing the entire book to an unreadably tiny font.
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  breakatwhitespace=false,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+  upquote=true,
+  frame=single,
+  framerule=0.2pt,
+  rulecolor=\color{black!25},
+  xleftmargin=0.4em,
+  xrightmargin=0.4em,
+  aboveskip=0.7em,
+  belowskip=0.7em
+}
+
+% Pandoc emits wide Markdown tables as longtable. Smaller cell padding and
+% ragged-right paragraph columns prevent short technical tokens from producing
+% large gaps or spilling into an adjacent column.
+\AtBeginEnvironment{longtable}{%
+  \small
+  \setlength{\tabcolsep}{3pt}%
+  \renewcommand{\arraystretch}{1.14}%
+}
+\setlength{\LTleft}{0pt}
+\setlength{\LTright}{0pt}
+
+% The standard book class reserves too little room for three-digit page
+% numbers in a deep table of contents when using Noto Serif.
+\makeatletter
+\renewcommand{\@pnumwidth}{2.2em}
+\renewcommand{\@tocrmarg}{3.2em}
+\makeatother
+
+% Keep headings visually attached to their first paragraph when possible.
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{0pt}

@@ -120,9 +120,9 @@ not behavior.
 
 Compare reward mass:
 
-$$
+```math
 \text{mass}_i \approx |w_i|\,\mathbb{E}[|f_i|]
-$$
+```
 
 Suppose one task has 8 points/step of positive reward and another has 2. An
 action-rate weight of `-0.1` is four times weaker relative to the first task,
@@ -324,3 +324,31 @@ change.” That tells the next engineer what to reproduce.
 
 Continue with
 [export, deployment, and sim-to-real](12_deployment_and_sim2real.md).
+
+## 11.12 Folded lab rubric
+
+<details>
+<summary>Show a reference evidence-backed review</summary>
+
+An acceptable answer names a reproducible case and separates facts from its
+next hypothesis. For example:
+
+```text
+Task/checkpoint:       exact task + checkpoint SHA-256
+Evaluation battery:   20 fixed flat starts at +0.2 m/s; 20 turn-in-place cases
+Observed result:      18/20 forward successes; 14/20 turn successes
+Raw failure classes:  4 forward falls after direction reversal; 2 initial slips
+Penalty signs:        every weighted penalty <= 0 (attach metric export)
+Episode length:       timeouts are success only for continuous walking cases
+Visible compromise:  large translation drift while tracking yaw
+State evidence:       median/p90 yaw error and x-y drift, synchronized to video
+Hypothesis:           turn-in-place samples remain underrepresented
+Single next change:   change only its explicit command bucket fraction
+```
+
+Those numbers are illustrative. Your report must derive them from the selected
+checkpoint. A strong answer also includes representative success/failure video,
+resolved configuration, seed list, evaluator commit, and the result that would
+falsify the proposed hypothesis.
+
+</details>

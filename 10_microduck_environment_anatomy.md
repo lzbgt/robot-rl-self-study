@@ -240,9 +240,9 @@ Event terms run in modes:
 Domain randomization (DR) trains one policy over a distribution of plausible
 robots:
 
-$$
+```math
 \theta_{physics} \sim p(\theta)
-$$
+```
 
 Microduck randomizes selected quantities such as friction, mass/inertia, CoM,
 battery voltage/sag, armature, encoder bias, IMU alignment, delays, and pushes.
@@ -355,3 +355,34 @@ verified without a trained policy.
 
 Continue with
 [training, evaluation, and debugging](11_training_evaluation_and_debugging.md).
+
+## 10.12 Folded lab answers
+
+<details>
+<summary>Show answers to the Section 10.11 configuration trace</summary>
+
+1. Standing is an **exact zero twist command** selected by the command term's
+   `rel_standing_envs` bucket. Near-zero uniform samples are not the same
+   training case.
+2. Independent continuous sampling makes simultaneous near-zero translation
+   and meaningful yaw too rare. `rel_turn_in_place_envs` reserves a deliberate
+   fraction of experience for that behavior.
+3. The 4D head command controls `neck_pitch`, `head_pitch`, `head_yaw`, and
+   `head_roll`, in that order.
+4. The body slot preserves the shared 61D hot-swap interface and keeps those
+   input weights available to policy-family tasks that train them. In the main
+   velocity recipe the ranges remain small but `body_pose_tracking` has weight
+   zero, so the interface does not prove body-pose skill.
+5. `randomize_joint_friction` changes the BAM actuator's per-environment
+   `friction_scale`. Randomizing MuJoCo `dof_frictionloss` would be a silent
+   no-op because BAM owns this friction model.
+6. The `-0.6` stage begins at `1000 * NUM_STEPS_PER_ENV`; with 24 rollout steps
+   that is environment step 24,000, or PPO iteration 1,000.
+
+With `--agent zero`, you can verify model loading, gravity, collision/contact
+geometry, passive-joint behavior, reset poses, actuator plumbing, and whether a
+zero action is numerically finite. You cannot verify learned command tracking,
+gait quality, recovery, or sim-to-real robustness because no trained actor is
+making decisions.
+
+</details>

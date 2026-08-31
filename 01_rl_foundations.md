@@ -73,9 +73,9 @@ of 4,096 actor observations, the observation tensor has shape `(4096, 61)`.
 
 The standard mathematical model is a Markov Decision Process (MDP):
 
-$$
+```math
 \mathcal{M} = (\mathcal{S}, \mathcal{A}, P, R, \gamma)
-$$
+```
 
 | Symbol | General meaning | Microduck example |
 | --- | --- | --- |
@@ -112,9 +112,9 @@ dynamics provide some short-term context without making the policy recurrent.
 
 A policy is a conditional distribution over actions:
 
-$$
+```math
 \pi_\theta(a_t \mid o_t)
-$$
+```
 
 $\theta$ represents all neural-network weights. The vertical bar means
 “conditioned on,” so the formula reads: “the probability of action $a_t$ when
@@ -122,15 +122,15 @@ the observation is $o_t$.” During training, the actor
 defines a Gaussian distribution so it can explore nearby actions. A rollout is
 a trajectory:
 
-$$
+```math
 \tau = (o_0,a_0,r_0,o_1,a_1,r_1,\ldots)
-$$
+```
 
 The discounted return from time $t$ is:
 
-$$
+```math
 G_t = r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} + \cdots
-$$
+```
 
 The capital sigma means “add all the following terms.” With $\gamma=0.99$, a
 reward one step later counts almost as much as a reward
@@ -139,10 +139,10 @@ long sums finite and expresses a preference for reliable, sooner outcomes.
 
 The learning objective is to find weights with high expected return:
 
-$$
+```math
 J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}\left[\sum_{t=0}^{T-1}
 \gamma^t r_t\right]
-$$
+```
 
 Read this as: “adjust network weights $\theta$ to maximize the average
 discounted reward over trajectories sampled from the policy.” “Expected” is
@@ -159,9 +159,9 @@ or repeating a violent motion, PPO may discover exactly that.
 
 A typical per-step reward is a weighted sum:
 
-$$
+```math
 r_t = \sum_i w_i f_i(s_t,a_t,s_{t+1})
-$$
+```
 
 For example, a velocity-tracking term may be positive while action-rate and
 foot-slip terms are costs. The sign convention is a software contract, not a
@@ -182,9 +182,9 @@ policy by the intended goal. Judge both:
 The velocity policy does not learn one fixed walk. A command $c_t$ is part of
 the observation, so the policy is more accurately written as:
 
-$$
+```math
 \pi_\theta(a_t \mid o_t, c_t)
-$$
+```
 
 Training samples many forward, lateral, turn, stand, and head-pose commands.
 Playback also resamples commands, which can look like a “random walk.” The
@@ -248,5 +248,29 @@ on-policy data at the missing frontier.
 
 Continue with the
 [math and neural-network toolkit](02_math_and_neural_network_toolkit.md).
-Worked answers and extra numerical exercises are in
-[Chapter 20](20_glossary_and_worked_problems.md).
+
+## 1.11 Folded solutions
+
+<details>
+<summary>Show answers to Section 1.10</summary>
+
+1. The velocity command describes the behavior requested *of* the policy, so
+   it must be an input. The action is the policy's response: fourteen immediate
+   joint targets. If forward velocity were an action, the network would merely
+   repeat the request instead of deciding how to move the mechanism.
+2. No—not deliberately before contact. Pixels in a viewer are not numbers in
+   the actor observation. The policy could learn a generic cautious gait or a
+   post-contact reaction, but pre-contact avoidance needs an obstacle feature,
+   map, range sensor, or an upper planner that changes the local command.
+3. Instantaneous reward evaluates one transition. Expected return averages a
+   discounted sequence of rewards over trajectories and uncertainty. A policy
+   can accept one small immediate cost when it produces a much better future,
+   or exploit a repeated small reward whose long-run sum is large.
+4. A reward is a proxy written in code. Any unspecified orientation, contact,
+   timing, or terminal condition may provide a cheaper way to score. The policy
+   follows the mathematical signal, not the author's unstated visual intent.
+5. A fallen body should normally terminate walking because continued fallen
+   transitions are outside the skill. The same fallen pose is a legitimate
+   reset state for stand-up, where recovery from it is the task.
+
+</details>

@@ -353,3 +353,33 @@ understanding.
 Continue with the [glossary and worked problems](20_glossary_and_worked_problems.md),
 then select one reproduction ladder whose success criterion you can state
 before running it.
+
+## 19.15 Folded lab completion rubric
+
+<details>
+<summary>Show reference evidence for Lab sequences A–E</summary>
+
+- **A — algorithm truth:** the small implementation and reference implementation
+  agree on hand-calculated updates; a documented baseline is reproduced across
+  three seeds; one ablation changes a single mechanism and reports uncertainty.
+- **B — vectorized robot learning:** tests, smoke training, resolved manager
+  terms, rollout tensor shape, ONNX export, and CPU rehearsal are connected by
+  exact paths/hashes. The five-iteration result is labeled pipeline evidence,
+  not locomotion performance.
+- **C — imitation and data:** a dataset card precedes training; splits prevent
+  episode/scene leakage; one-step and chunked BC use matching data; the
+  perturbation test reports recovery and failure, not only nominal loss.
+- **D — foundation adaptation:** official checkpoint evaluation passes before
+  fine-tuning; target-only BC and adaptation see the same target examples;
+  model memory, tail latency/action age, in-distribution and held-out results,
+  licenses, and failures are preserved.
+- **E — safe language planning:** the model can select only offered exact IDs;
+  local schema/preconditions reject absent/stale cases; every effect has
+  timeout/cancel/fallback; generated prose/code and raw motor values have zero
+  execution authority.
+
+For every sequence, commit a provenance record like Section 19.13 and a
+one-command evaluator. “Repository installed” is setup evidence, not a lab
+result.
+
+</details>

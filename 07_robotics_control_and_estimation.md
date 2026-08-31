@@ -28,9 +28,9 @@ mean the full physical state has dimension 14.
 
 For a revolute joint,
 
-$$
+```math
 \tau = I\alpha
-$$
+```
 
 is the simplest analogy: torque $\tau$ produces angular acceleration $\alpha$
 according to rotational inertia $I$. A whole robot is coupled, so moving one
@@ -40,10 +40,10 @@ joint can accelerate many links.
 
 A standard compact rigid-body equation is
 
-$$
+```math
 M(q)\ddot q+C(q,\dot q)\dot q+g(q)+f(\dot q)
 =\tau+J(q)^TF_{ext}.
-$$
+```
 
 Read it term by term:
 
@@ -72,9 +72,9 @@ Common frames are:
 
 A rotation matrix $R_{WB}$ can map a body-frame vector into world coordinates:
 
-$$
+```math
 v_W=R_{WB}v_B.
-$$
+```
 
 A reversed transform, wrong axis sign, or degrees/radians mismatch can look
 like a failed policy even if the network is correct.
@@ -108,9 +108,9 @@ even when the control interface matches.
 
 A simple contact model limits tangential friction force:
 
-$$
+```math
 |F_t|\le\mu F_n,
-$$
+```
 
 where $F_n$ is normal force and $\mu$ is a friction coefficient. If requested
 tangential force exceeds the limit, the foot slips. Real tires/feet also show
@@ -150,9 +150,9 @@ when BAM computes it inside the actuator. The project scales BAM's
 A feedback controller compares a target to a measurement. A proportional-
 derivative (PD) joint controller is
 
-$$
+```math
 \tau=K_p(q_{target}-q)-K_d\dot q.
-$$
+```
 
 - proportional term pushes against position error;
 - derivative term damps motion;
@@ -209,9 +209,9 @@ stop.
 
 A 50 Hz policy period is
 
-$$
+```math
 T=\frac{1}{50}=0.02\text{ s}=20\text{ ms}.
-$$
+```
 
 If physics simulates at 5 ms and the action is held for four physics steps,
 the policy sees a new observation every 20 ms. This hold count is called
@@ -309,3 +309,41 @@ properties do not replace electrical or realtime interlocks.
 
 Continue with the [Microduck software and control architecture](08_microduck_software_and_control_architecture.md),
 where these concepts become concrete interfaces.
+
+## 7.16 Folded solutions
+
+<details>
+<summary>Show answers to Section 7.15</summary>
+
+1. The policy period is $5\text{ ms}\times4=20\text{ ms}$, so its rate is
+   $1/0.020=50$ Hz.
+2. In $M(q)\ddot q+C(q,\dot q)\dot q+g(q)=\tau+J^Tf_{ext}$: $M$ maps joint
+   acceleration to inertial torque; $C\dot q$ contains velocity-dependent
+   Coriolis/centrifugal effects; $g$ is gravity torque; $\tau$ is commanded or
+   actuator torque; and $J^Tf_{ext}$ maps external/contact forces into joint
+   torque.
+3. With low proportional gain, static load may leave a position error; a target
+   beyond the desired angle can create enough torque to hold the actual angle.
+   The physical joint still needs independent limits because target overshoot
+   can otherwise request collision, overload, or hard-stop impact.
+4. A wheel naturally accepts bounded velocity or torque/current target under a
+   lower wheel loop. A height servo naturally accepts a bounded position target
+   with rate/limit enforcement. The exact choice follows measured actuator and
+   controller semantics.
+5. Define sensor frame $S$ and body frame $B$. For a sensor mounted +90° about
+   body yaw, apply the calibrated rotation $R_{BS}$ to every sensor-frame vector
+   before constructing body-frame observations. Test known gravity and angular-
+   rate directions; do not repair a fixed mounting transform with randomization.
+6. Constant bias: gyro zero offset. Random noise: encoder quantization or IMU
+   measurement noise. Latency: filtering plus bus/queue/inference delay.
+7. A reward penalty changes expected optimization preference. It can be traded
+   against positive reward, has approximation error, and acts only when the
+   policy runs. An E-stop must independently and deterministically remove or
+   bound actuator authority.
+8. Clamp the robot in a fixture, begin at low voltage/current, and command a
+   small multisine or step sequence inside accepted travel. Log command,
+   encoder, current, voltage, load, and synchronized timestamps. Fit delay,
+   gain, damping/friction on one sequence; validate on a different sequence;
+   stop on current, temperature, position, velocity, or watchdog limits.
+
+</details>

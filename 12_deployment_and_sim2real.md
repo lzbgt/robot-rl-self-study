@@ -188,11 +188,11 @@ must be able to stop or hold the robot without a cloud round trip.
 The sim-to-real gap is the difference between the transition distribution used
 for training and the real robot:
 
-$$
+```math
 P_{sim}(s_{t+1}\mid s_t,a_t)
 \neq
 P_{real}(s_{t+1}\mid s_t,a_t)
-$$
+```
 
 Microduck reduces this gap with:
 
@@ -318,3 +318,45 @@ an evidence-backed interface match.
 
 Continue with
 [Microduck customization labs](13_microduck_customization_labs.md).
+
+## 12.13 Folded parity-lab solution
+
+<details>
+<summary>Show the expected evidence and comparison code</summary>
+
+The result should include model/checkpoint hashes, exact observation corpus,
+normalizer provenance, action transform, runtimes, tolerances, and per-element
+error—not only “both looked similar.” For the same already-normalized or same
+raw-and-embedded-normalizer input (choose one contract), compare arrays:
+
+```python
+import numpy as np
+
+# Shape: (number_of_frozen_cases, 14). These must come from the same 61D
+# observations and deterministic actor mode.
+checkpoint_actions = np.load("checkpoint_actions.npy")
+onnx_actions = np.load("onnx_actions.npy")
+
+assert checkpoint_actions.shape == onnx_actions.shape
+assert checkpoint_actions.shape[1] == 14
+error = np.abs(checkpoint_actions - onnx_actions)
+print("max_abs", error.max())
+print("p99_abs", np.quantile(error, 0.99))
+
+# Select tolerances from numeric precision/runtime evidence; do not copy these
+# illustrative values blindly for a quantized model.
+np.testing.assert_allclose(
+    onnx_actions,
+    checkpoint_actions,
+    rtol=1e-5,
+    atol=1e-6,
+)
+```
+
+First compare one-step outputs; long contact trajectories can diverge from tiny
+floating-point differences even when the interface is correct. If one-step
+outputs disagree, inspect observation order, raw versus normalized input,
+actor mean versus stochastic sample, dtype, HOME/action scaling, and stale
+previous action before blaming physics.
+
+</details>

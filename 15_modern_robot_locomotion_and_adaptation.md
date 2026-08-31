@@ -64,11 +64,11 @@ It accompanied the open
 
 The important distinction is:
 
-$$
+```math
 \text{environment steps}
 \ne
 \text{wall-clock seconds}.
-$$
+```
 
 Parallelism produces more samples per second; it does not make each sample more
 informative. It changes optimization dynamics too: batch size, update count,
@@ -105,11 +105,11 @@ Let physical parameters be $\xi$, such as mass, friction, delay, or motor
 strength. Instead of optimizing one nominal environment, domain randomization
 optimizes
 
-$$
+```math
 J(\theta)=
 \mathbb{E}_{\xi\sim p(\xi),\ \tau\sim\pi_\theta,\xi}
 \left[\sum_t\gamma^tr_t\right].
-$$
+```
 
 Plain language: sample a plausible robot/world, run the policy, and optimize
 average performance over that population.
@@ -202,10 +202,10 @@ physics. An adaptive system tries to infer the current environment.
 
 Conceptually:
 
-$$
+```math
 z_t=g_\psi(o_{t-H:t},a_{t-H:t-1}),
 \qquad a_t=\pi_\theta(o_t,z_t).
-$$
+```
 
 $z_t$ is not necessarily a human-readable friction coefficient. It is a
 control-useful summary inferred from how the robot has responded.
@@ -345,3 +345,36 @@ defines evidence before training.
    something specific.
 
 Continue with [vision, foundation policies, and hierarchical autonomy](16_vision_foundation_policies_and_hierarchy.md).
+
+## 15.16 Folded solutions
+
+<details>
+<summary>Show reference answers to Section 15.15</summary>
+
+1. Parallel simulation generates more transitions per wall-clock second. Sample
+   efficiency asks how much improvement occurs per transition, so batching the
+   same algorithm across more environments does not inherently improve it.
+2. A teacher may observe true friction. A deployment student can infer its
+   effect from a history of commands, wheel/foot motion, body response, and
+   slip/contact; the latent should be tested on held-out friction changes.
+3. Domain randomization trains one policy to work across a distribution without
+   explicitly identifying the current member. Online adaptation uses recent
+   history or measurements to infer a latent/current dynamics context and
+   changes behavior accordingly.
+4. Unmeasured ranges can omit reality, include impossible physics, or make the
+   task so broad that the policy becomes conservative. Calibration supplies the
+   nominal/range hypothesis; held-out tests show whether it generalizes.
+5. For stair climbing label at least: missed/late geometry; wrong height/depth;
+   infeasible foothold; correct perception but wrong action; toe/body collision;
+   slip/actuator saturation; stale frame; recovery success/failure; fall; and
+   safety intervention. Report denominators and video/state evidence.
+6. A valid comparison card must quote the chosen paper's exact embodiment,
+   inputs, action, rate, data, baseline, seeds/trials, and public artifact. If
+   the source omits an item, write “not reported”; do not infer it from a
+   neighboring project.
+7. Example: “Does a history-conditioned actor improve held-out voltage-sag
+   recovery at matched nominal gait quality?” A negative result still bounds
+   the value of history under the tested delay/range and may show that actuator
+   calibration or explicit voltage sensing is the simpler solution.
+
+</details>

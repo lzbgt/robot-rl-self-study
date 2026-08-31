@@ -11,9 +11,9 @@ This chapter explains the motivation and failure modes before the algorithms.
 
 An off-policy learner commonly stores transitions
 
-$$
+```math
 (s_t,a_t,r_t,s_{t+1},d_t)
-$$
+```
 
 in a **replay buffer**, where $d_t$ indicates termination. Training samples
 minibatches from the buffer rather than only the newest trajectory.
@@ -33,18 +33,18 @@ which the data provides weak evidence.
 PPO usually uses a state-value critic $V(s)$. Continuous off-policy
 actor-critic methods often learn
 
-$$
+```math
 Q_\phi(s,a),
-$$
+```
 
 the expected return for taking action $a$ in state $s$ and following a policy
 afterward.
 
 A one-step critic target has the form
 
-$$
+```math
 y=r+\gamma(1-d)\,\text{next-value}.
-$$
+```
 
 The factor $(1-d)$ removes future value after a true terminal transition. A
 time-limit truncation may need different handling because the underlying task
@@ -75,11 +75,11 @@ Twin Delayed Deep Deterministic Policy Gradient (TD3) learns:
 
 Its target is approximately
 
-$$
+```math
 y=r+\gamma(1-d)
 \min_{i=1,2}Q_{\bar\phi_i}
 \left(s',\pi_{\bar\theta}(s')+\epsilon\right),
-$$
+```
 
 where target noise $\epsilon$ is clipped.
 
@@ -93,10 +93,10 @@ The three ideas encoded in the name/paper are:
 
 The actor is optimized to choose actions its critic values:
 
-$$
+```math
 \max_\theta\ \mathbb{E}_{s\sim D}
 [Q_{\phi_1}(s,\pi_\theta(s))].
-$$
+```
 
 The [TD3 paper](https://arxiv.org/abs/1802.09477) isolates these mechanisms.
 Its benchmark findings support those mechanisms in the evaluated continuous
@@ -107,11 +107,11 @@ control tasks; they do not erase the need for robot-specific evaluation.
 Soft Actor-Critic (SAC) learns a stochastic policy and adds entropy to the
 return:
 
-$$
+```math
 J(\pi)=\mathbb{E}\left[\sum_{t=0}^{T-1}\gamma^t
 \left(r_t+\alpha\mathcal{H}
 (\pi(\cdot\mid s_t))\right)\right].
-$$
+```
 
 $\mathcal{H}$ is entropy and $\alpha$ is a temperature. In plain language, the
 policy values reward while retaining action diversity when several actions are
@@ -121,32 +121,32 @@ For continuous actions, implementations commonly sample an unconstrained
 Gaussian variable using a differentiable reparameterization, then apply `tanh`
 to bound it:
 
-$$
+```math
 u=\mu_\theta(s)+\sigma_\theta(s)\odot\xi,
 \quad \xi\sim\mathcal{N}(0,I),
 \quad a=\tanh(u).
-$$
+```
 
 $\odot$ means elementwise multiplication. Writing randomness as an input
 $\xi$ allows gradients to flow through $\mu$ and $\sigma$.
 
 A soft critic target includes the next action's entropy term:
 
-$$
+```math
 y=r+\gamma(1-d)
 \left[
 \min_i Q_{\bar\phi_i}(s',a')
 -\alpha\log\pi_\theta(a'\mid s')
 \right].
-$$
+```
 
 The actor minimizes approximately
 
-$$
+```math
 J_\pi=\mathbb{E}
 \left[\alpha\log\pi_\theta(a\mid s)
 -\min_iQ_{\phi_i}(s,a)\right].
-$$
+```
 
 Interpretation: prefer actions the critics value, while paying a cost for
 collapsing the action distribution too sharply. Modern SAC often tunes
@@ -174,9 +174,9 @@ network size, evaluation protocol, and number of seeds.
 
 A dynamics model predicts the next state distribution and possibly reward:
 
-$$
+```math
 p_\psi(s_{t+1},r_t\mid s_t,a_t).
-$$
+```
 
 If the model is known, Model Predictive Control (MPC) can repeatedly:
 
@@ -285,10 +285,10 @@ hybrid can use:
 
 A **residual policy** outputs a bounded correction:
 
-$$
+```math
 u=u_{nominal}+\Delta u_\theta,
 \qquad |\Delta u_\theta|\le u_{residual,max}.
-$$
+```
 
 This can reduce exploration scope and preserve an interpretable baseline.
 However, a poorly defined residual can still destabilize the nominal loop.
@@ -325,3 +325,45 @@ Changing algorithm and reward together answers no clean question.
    balance controller.
 
 Continue with [robot dynamics, control, and estimation](07_robotics_control_and_estimation.md).
+
+## 6.15 Folded solutions
+
+<details>
+<summary>Show answers to Section 6.14</summary>
+
+1. Replay reuses each expensive transition and decorrelates adjacent samples,
+   improving transition efficiency. But old data came from older policies and
+   possibly older task/robot distributions, so its state-action coverage can
+   differ from the policy currently being optimized.
+2. If critic noise is sometimes optimistically high, taking the smaller of two
+   estimates makes that error less likely to enter the target. The minimum can
+   instead be systematically low, creating conservative or pessimistic bias.
+3. As SAC temperature $\alpha$ approaches zero, entropy contributes less and
+   the objective approaches ordinary reward-maximizing actor-critic behavior.
+   Exploration/diversity pressure weakens.
+4. With $d=1$, the bootstrap multiplier is zero, so $y=r$. Bootstrapping beyond
+   a true terminal state would incorrectly assign value after the episode has
+   ended.
+5. Small one-step model errors compound as predicted states become inputs to
+   later predictions. Farther plans can exploit model mistakes or cross contact
+   events the model predicts poorly; shorter receding horizons refresh from
+   reality more often.
+6. Measure worst-case—not just average—inference/planning time, jitter,
+   deadline misses, horizon/sample count, model error, memory, observation age,
+   action continuity, and fallback behavior. A 100 Hz loop has only 10 ms for
+   the entire sensor-to-command path.
+7. Let a classical balance controller output wheel target $u_c$ and constrain
+   the learned correction:
+
+   ```python
+   residual_limit_rad_s = 1.0
+   residual = max(-residual_limit_rad_s,
+                  min(residual_limit_rad_s, actor_output))
+   wheel_target = classical_target + residual
+   ```
+
+   Expire the residual on stale input or deadline miss, rate-limit the combined
+   target, preserve MCU current/speed/tilt limits, and prove that residual zero
+   returns to the accepted baseline.
+
+</details>

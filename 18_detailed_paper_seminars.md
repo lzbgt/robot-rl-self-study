@@ -52,9 +52,9 @@ environment 4096:  o0 a0 r0 ... o23 a23 r23
 The time horizon per environment can be short because the aggregate batch is
 large. For Microduck:
 
-$$
+```math
 4096\times24=98,304\text{ transitions per iteration}.
-$$
+```
 
 This changes wall-clock economics. It becomes reasonable to discard stale PPO
 data because almost 100,000 fresh transitions arrive each iteration.
@@ -68,9 +68,9 @@ competence frontier.
 
 The general principle is not “always increase difficulty.” It is:
 
-$$
+```math
 \text{sample where success is neither nearly zero nor nearly certain}.
-$$
+```
 
 If every rollout fails instantly, the learning signal cannot distinguish useful
 partial behavior. If every rollout succeeds, it supplies little pressure to
@@ -135,9 +135,9 @@ than compromise.
 The true environment parameter vector might contain friction, payload, motor
 strength, and terrain compliance:
 
-$$
+```math
 e_t=[\mu, m_{payload}, k_{motor}, \ldots].
-$$
+```
 
 Those quantities are easy to read from simulation but usually unavailable on
 the real robot.
@@ -146,17 +146,17 @@ the real robot.
 
 RMA trains a base policy with a compact environment encoding:
 
-$$
+```math
 a_t=\pi(o_t,z_t).
-$$
+```
 
 During a privileged training phase, an encoder can derive $z_t$ from simulator
 environment information. A deployment adaptation module instead predicts it
 from recent observation/action history:
 
-$$
+```math
 \hat z_t=g(o_{t-H:t},a_{t-H:t-1}).
-$$
+```
 
 The history contains the consequence of prior actions. For example, the same
 motor command produces different acceleration under different payload or
@@ -231,13 +231,13 @@ policy through imagined rollouts.
 Dreamer-family methods use a compact latent state containing a deterministic
 memory and a stochastic component. At a high level:
 
-$$
+```math
 h_t=f(h_{t-1},z_{t-1},a_{t-1}),
-$$
+```
 
-$$
+```math
 z_t\sim q(z_t\mid h_t,o_t).
-$$
+```
 
 - $h_t$ carries recurrent history;
 - $z_t$ represents uncertain current information;
@@ -324,11 +324,11 @@ scored in latent space.
 
 Conceptually, for horizon $H$:
 
-$$
+```math
 \text{score}(a_{t:t+H-1})=
 \sum_{k=0}^{H-1}\gamma^k\hat r(z_{t+k},a_{t+k})
 +\gamma^H\hat V(z_{t+H}).
-$$
+```
 
 The learned value estimates what happens after the short explicit planning
 horizon. This is a common model-based pattern: model near-term consequences,
@@ -355,10 +355,10 @@ breadth within that suite.
 A feed-forward PPO actor performs one network pass. TD-MPC2 performs several
 model/value evaluations over candidate sequences per action. Compare:
 
-$$
+```math
 \text{data efficiency} \quad\text{versus}\quad
 \text{runtime planning cost and model risk}.
-$$
+```
 
 For a 20 Hz arm, planning may fit comfortably. For a 100 Hz balance loop on a
 small processor, measure worst-case execution before choosing it.
@@ -465,10 +465,10 @@ conditioned on observation and $z$.
 
 The CVAE objective has two parts:
 
-$$
+```math
 L=L_{action}+\beta D_{KL}
 \bigl(q_\phi(z\mid o,a_{t:t+H})\|p(z)\bigr).
-$$
+```
 
 - $L_{action}$ makes predicted chunks match demonstrations;
 - KL regularization makes the training latent distribution compatible with a
@@ -485,18 +485,18 @@ the policy completely open loop.
 Diffusion starts with a noisy action trajectory $x_K$ and repeatedly predicts
 how to remove noise conditioned on observation:
 
-$$
+```math
 x_{k-1}=\text{denoise}_\theta(x_k,o,k)+\text{scheduled noise}.
-$$
+```
 
 Training corrupts real action sequences with known Gaussian noise and asks the
 network to predict the noise (or an equivalent denoising target):
 
-$$
+```math
 L(\theta)=
 \mathbb{E}_{x_0,k,\epsilon}
 \left[\|\epsilon-epsilon_\theta(x_k,o,k)\|^2\right].
-$$
+```
 
 This is supervised generative modeling. It can retain distinct modes because
 sampling begins from different noise rather than forcing one mean action.
@@ -555,10 +555,10 @@ number. De-tokenization maps the selected bin back to a command.
 
 This turns policy learning into sequence classification:
 
-$$
+```math
 L=-\sum_t\sum_j \log p_\theta
 (\text{action-token}_{t,j}\mid I_{\le t},\text{instruction}).
-$$
+```
 
 The model is trained by imitation. It does not learn from a scalar reward in
 the PPO sense.
@@ -585,11 +585,11 @@ tasks/variations in the paper's terminology).
 
 The central hypothesis is positive transfer:
 
-$$
+```math
 \text{target robot performance with multi-robot pretraining}
 >
 \text{target-only training at comparable target data}.
-$$
+```
 
 RT-X models adapt RT-1/RT-2-style policies to the combined data.
 
@@ -688,9 +688,9 @@ the organizations that developed closed RT-2 models.
 Parameter-efficient fine-tuning such as LoRA updates low-rank matrices rather
 than every full weight matrix:
 
-$$
+```math
 W'=W+BA,
-$$
+```
 
 where $A$ and $B$ have much smaller rank than $W$. This reduces trainable
 parameters, but not necessarily base-model inference memory or latency.
@@ -705,9 +705,9 @@ transforms noise into an action trajectory.
 In a simplified conditional flow-matching view, interpolate between noise
 $x_0$ and data action $x_1$:
 
-$$
+```math
 x_\tau=(1-\tau)x_0+\tau x_1.
-$$
+```
 
 Train a vector field $v_\theta(x_\tau,\tau,c)$, conditioned on vision/language
 $c$, to predict the direction toward data. At inference, numerically integrate
@@ -754,10 +754,10 @@ execution using asynchronous inference.
 Asynchrony introduces a control question: the predicted chunk may be based on
 an older observation. Measure
 
-$$
+```math
 \text{observation age at action execution}
 =\text{capture} + \text{queue} + \text{inference} + \text{transport delay}.
-$$
+```
 
 Smooth throughput is not enough if stale actions meet a disturbed robot.
 
@@ -812,13 +812,13 @@ can successfully execute that skill in the current situation.
 
 For candidate skill $k$:
 
-$$
+```math
 \text{score}(k)
 \propto
 p_{LM}(k\mid\text{instruction, history})
 \times
 p_{afford}(\text{success}\mid s,k).
-$$
+```
 
 The product embodies “Say” times “Can.” A sponge-related skill may be useful
 for cleaning, but its affordance should be low if no sponge is reachable.
@@ -869,7 +869,7 @@ These papers demonstrate important semantic/planning mechanisms in their robot
 settings. They do not make language-model output a hard guarantee, solve
 perception uncertainty universally, or remove the need for local feedback.
 
-### Jump Rover design exercise
+### Worked Jump Rover design example
 
 Define a fixed skill registry:
 
@@ -921,13 +921,13 @@ proprioception and when to rely more on contact evidence.
 
 Conceptually:
 
-$$
+```math
 b_t=f_\psi(b_{t-1},o_t^{prop},o_t^{ext},a_{t-1}),
-$$
+```
 
-$$
+```math
 a_t=\pi_\theta(o_t^{prop},b_t,c_t).
-$$
+```
 
 $b_t$ is a learned belief state carrying temporal context.
 
@@ -1004,3 +1004,65 @@ Across these papers, the durable ideas are:
 Continue with the
 [open-source ecosystem and reproduction labs](19_open_source_robot_learning_ecosystem.md),
 which turns these seminars into executable project choices.
+
+## 18.12 Folded seminar-exercise guidance
+
+<details>
+<summary>Show reference experiment designs for Seminars 1–10</summary>
+
+These are solution **structures**, because reproducible measurements—not a
+predetermined winning number—answer the research exercises.
+
+1. **Parallel PPO:** keep total transitions, task, network, optimizer, and
+   evaluator fixed. Vary only environment count and corresponding iteration
+   count. Report throughput, memory, updates, wall time, and three-seed
+   uncertainty. If return changes, batch/update geometry changed learning even
+   though transition count matched.
+2. **RMA:** compare feed-forward robustness, history, and privileged-teacher/
+   history-student variants with matched actor capacity where possible. Use
+   held-out fixed dynamics plus a mid-episode change; plot tracking error versus
+   time since the change to distinguish robustness from adaptation speed.
+3. **World model:** split complete trajectories before creating windows, fit on
+   training trajectories, and roll out held-out action sequences open loop.
+   Compare one-, five-, and 25-step state error against persistence. Never leak
+   overlapping future windows into validation.
+4. **TD-MPC2 horizon:** freeze one checkpoint and evaluator, then vary planning
+   horizon. Record success/return together with median, p95/p99, and maximum
+   inference time. A horizon is unusable if it misses the control deadline even
+   when its simulator return improves.
+5. **QT-Opt action search:** define a known 2D Q surface with multiple peaks.
+   Compare grid and cross-entropy method (CEM) using equal Q-evaluation budgets;
+   repeat random CEM seeds and report distance/value regret from the known
+   optimum.
+6. **ACT/Diffusion:** hold dataset split and visual encoder fixed. Compare one-
+   step BC and two chunk horizons, inject the same perturbation, and measure
+   success, recovery time, action discontinuity, and inference age. Visualize
+   full predicted chunks so “smooth” cannot hide stale open-loop action.
+7. **Open X transfer:** first harmonize action frames, units, rates, cameras,
+   and missing fields in a schema table. Match target examples across target-
+   only and pretrain/fine-tune runs; report every task so negative transfer is
+   visible.
+8. **Open VLA:** reproduce the released evaluator before fine-tuning. Compare
+   from-scratch BC, frozen backbone, parameter-efficient adaptation, and full
+   adaptation only when compute allows. Fix target splits and report memory,
+   tail latency, observation age, in-distribution success, and held-out object/
+   layout success.
+9. **Language planning:** construct exact skill IDs and local preconditions.
+   Evaluate LM relevance, affordance-only, and their product on present/absent
+   objects. Score invalid selection separately from execution failure and prove
+   timeout/network loss retains local `stop`.
+10. **Perceptive locomotion:** progress from oracle geometry + existing velocity
+    policy, through noisy/dropout planning, to a new visual actor. Use the same
+    held-out obstacles and label perception, planning, command tracking,
+    contact, actuator, recovery, and safety failures separately.
+
+One compact run table prevents a throughput exercise from becoming a story:
+
+```csv
+seed,num_envs,total_transitions,updates,fps,gpu_peak_mb,wall_s,eval_return
+0,64,REPLACE,REPLACE,REPLACE,REPLACE,REPLACE,REPLACE
+0,256,REPLACE,REPLACE,REPLACE,REPLACE,REPLACE,REPLACE
+0,MAX_FEASIBLE,REPLACE,REPLACE,REPLACE,REPLACE,REPLACE,REPLACE
+```
+
+</details>

@@ -8,13 +8,13 @@ Microduck rollouts into improved actor and critic networks.
 The actor chooses actions. The critic estimates how much discounted reward is
 still available from the current situation.
 
-$$
+```math
 \text{actor: } \pi_\theta(a_t\mid o_t)
-$$
+```
 
-$$
+```math
 \text{critic: } V_\phi(x_t) \approx \mathbb{E}[G_t\mid x_t]
-$$
+```
 
 The actor must use observations available on the real robot. The critic is
 needed only during training and may receive privileged simulator information.
@@ -48,9 +48,9 @@ produce reward 0, it was better than expected.
 
 The advantage measures this relative quality:
 
-$$
+```math
 A_t = Q(o_t,a_t) - V(o_t)
-$$
+```
 
 A positive advantage means the sampled action led to a better outcome than the
 critic expected. A negative advantage means it was worse. Policy-gradient
@@ -61,16 +61,16 @@ the probability of negative-advantage actions.
 
 The one-step temporal-difference residual is:
 
-$$
+```math
 \delta_t = r_t + \gamma V_\phi(x_{t+1}) - V_\phi(x_t)
-$$
+```
 
 Generalized Advantage Estimation (GAE) combines a sequence of these residuals:
 
-$$
+```math
 \hat{A}_t = \delta_t + (\gamma\lambda)\delta_{t+1}
 + (\gamma\lambda)^2\delta_{t+2} + \cdots
-$$
+```
 
 Microduck uses $\gamma=0.99$ and $\lambda=0.95$. Lower $\lambda$ relies more
 on the critic and usually lowers variance; higher $\lambda$ uses longer sampled
@@ -79,9 +79,9 @@ not a law of robotics.
 
 The value target is commonly formed from the advantage and old value estimate:
 
-$$
+```math
 \hat{G}_t = \hat{A}_t + V_{\text{old}}(x_t)
-$$
+```
 
 The critic learns by reducing error between $V_\phi(x_t)$ and this target.
 
@@ -90,11 +90,11 @@ The critic learns by reducing error between $V_\phi(x_t)$ and this target.
 After collecting a rollout with policy $\pi_{\theta_{old}}$, PPO asks how the
 new policy changes the probability of each sampled action:
 
-$$
+```math
 r_t(\theta) =
 \frac{\pi_\theta(a_t\mid o_t)}
      {\pi_{\theta_{old}}(a_t\mid o_t)}
-$$
+```
 
 - $r_t=1$ means no probability change.
 - $r_t>1$ means the sampled action became more likely.
@@ -108,14 +108,14 @@ no longer represents it. PPO limits the incentive for a large move.
 
 The clipped surrogate objective is:
 
-$$
+```math
 L^{CLIP}(\theta) = \mathbb{E}_t\left[
 \min\left(
 r_t(\theta)\hat{A}_t,
-\operatorname{clip}(r_t(\theta),1-\epsilon,1+\epsilon)\hat{A}_t
+\mathrm{clip}(r_t(\theta),1-\epsilon,1+\epsilon)\hat{A}_t
 \right)
 \right]
-$$
+```
 
 Microduck uses $\epsilon=0.2$, so the clipped interval is $[0.8,1.2]$.
 
@@ -141,9 +141,9 @@ preserve enough action-distribution entropy to explore
 
 One common minimization form is:
 
-$$
+```math
 L = -L^{CLIP} + c_v L^{value} - c_e H[\pi_\theta]
-$$
+```
 
 The main configuration uses value-loss coefficient `1.0` and entropy
 coefficient `0.01`. Entropy is not “randomness is always good.” Early in
@@ -199,9 +199,9 @@ its units.
 
 Conceptually, each feature becomes:
 
-$$
+```math
 \tilde{o}_i = \frac{o_i - \mu_i}{\sqrt{\sigma_i^2 + \varepsilon}}
-$$
+```
 
 The running mean and variance are learned from training observations and saved
 in the checkpoint. The ONNX exporter includes the actor's normalizer in the
@@ -250,3 +250,34 @@ individual weighted reward terms and rollouts.
 
 Continue with
 [off-policy and model-based reinforcement learning](06_off_policy_and_model_based_rl.md).
+
+## 5.12 Folded solutions
+
+<details>
+<summary>Show answers to Section 5.11</summary>
+
+1. The critic is used to estimate returns/advantages during training and is
+   not part of the deployed actor. Simulator-only truth can therefore reduce
+   critic noise while the actor remains restricted to reproducible sensors.
+   Leakage into actor inputs would break this argument.
+2. Zero advantage means the sampled result matched the critic's baseline for
+   that observation. The policy-gradient term has no first-order reason to
+   make that action more or less likely, though entropy and other loss terms
+   may still update the policy.
+3. Clipping reduces the incentive for one batch to move action probabilities
+   too far from the behavior policy that collected it. It is a practical trust-
+   region surrogate, not a proof that every update improves the real task.
+4. One iteration collects $4096\times24=98{,}304$ transitions.
+5. Normalization changes the function's actual input. Omitting the saved mean
+   and variance makes the ONNX actor see a different numeric distribution than
+   the network optimized in training.
+
+A minimal transition-count check is:
+
+```python
+num_envs = 4096
+steps_per_env = 24
+assert num_envs * steps_per_env == 98_304
+```
+
+</details>

@@ -15,5 +15,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Check chapter index, local links, and examples
-        run: python scripts/check_book.py
+      - name: Install the PDF toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends \
+            pandoc texlive-xetex texlive-latex-extra \
+            texlive-fonts-recommended fonts-noto-core poppler-utils
+      - name: Check Markdown, examples, and the complete PDF
+        run: make check
+      - name: Upload the verified PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-rl-self-study-pdf
+          path: |
+            dist/robot-rl-self-study.pdf
+            dist/SHA256SUMS
+          if-no-files-found: error

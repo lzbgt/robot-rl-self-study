@@ -1,0 +1,27 @@
+title: "Robot Reinforcement Learning"
+subtitle: "From First Principles to Real Robots"
+author: "Bruce Lu"
+date: "2026-08-31"
+lang: en-US
+documentclass: book
+classoption:
+  - oneside
+  - openany
+papersize: a4
+fontsize: 10pt
+geometry:
+  - top=18mm
+  - bottom=20mm
+  - left=18mm
+  - right=18mm
+mainfont: "Noto Serif"
+sansfont: "Noto Sans"
+monofont: "Noto Sans Mono"
+mathfont: "Noto Sans Math"
+linestretch: 1.06
+colorlinks: true
+linkcolor: MidnightBlue
+urlcolor: MidnightBlue
+toc: true
+toc-depth: 2
+toc-title: Contents

@@ -34,9 +34,9 @@ and pretrained representations, so “robot learning” is broader than RL.
 
 A **dynamics model** predicts how state changes:
 
-$$
+```math
 \hat{s}_{t+1}=f_\psi(s_t,a_t).
-$$
+```
 
 - **Model-free RL** learns a policy and/or value without using a learned
   transition model for planning.
@@ -114,9 +114,9 @@ conditioned on the observation, and its spread is learned or configured.
 | --- | --- | --- | --- | --- | --- |
 | tabular Q-learning | discrete | online, off-policy | Q-table | greedy Bellman target | small teaching/control problem |
 | DQN | discrete | online replay, off-policy | Q-network | replay + target network | games or finite skill choices |
-| PPO | discrete/continuous | online, on-policy | actor + value critic | clipped policy-ratio objective | high-throughput simulation |
+| PPO | discrete or continuous | online, on-policy | actor + value critic | clipped policy-ratio objective | high-throughput simulation |
 | TD3 | continuous | online replay, off-policy | deterministic actor + twin critics | clipped double-Q + delayed actor | sample-efficient state control |
-| SAC | continuous/discrete variants | online replay, off-policy | stochastic actor + critics | maximize reward and entropy | continuous control with costly data |
+| SAC | continuous; discrete variants exist | online replay, off-policy | stochastic actor + critics | maximize reward and entropy | continuous control with costly data |
 | IQL/CQL | usually continuous | fixed offline data | values/critics + policy | avoid optimistic unseen actions | logged robot datasets |
 | DreamerV3 | varied | online replay, model-based | latent world model + actor/critic | learn through imagined rollouts | pixels/general domains |
 | TD-MPC2 | continuous | online replay, model-based | latent model + values/policy | local latent trajectory optimization | sample-efficient continuous control |
@@ -130,20 +130,20 @@ task, data, compute, observation/action choices, and evaluation.
 
 ### DQN: make Q agree with a bootstrapped target
 
-$$
+```math
 \min_\theta
 \left(r+\gamma\max_{a'}Q_{\bar\theta}(s',a')-Q_\theta(s,a)\right)^2.
-$$
+```
 
 Move the current action value toward immediate reward plus the target network's
 best next value.
 
 ### PPO: improve sampled actions without moving probability too far
 
-$$
+```math
 \max_\theta\ \mathbb{E}
-\left[\min(r_tA_t,\operatorname{clip}(r_t,1-\epsilon,1+\epsilon)A_t)\right].
-$$
+\left[\min(r_tA_t,\mathrm{clip}(r_t,1-\epsilon,1+\epsilon)A_t)\right].
+```
 
 Increase probability for better-than-expected sampled actions and decrease it
 for worse ones, while clipping the incentive for a large probability-ratio
@@ -151,10 +151,10 @@ change. Chapter 5 derives every term.
 
 ### TD3: trust the smaller of two learned critics
 
-$$
+```math
 y=r+\gamma\min_{i=1,2}Q_{\bar\phi_i}
 (s',\pi_{\bar\theta}(s')+\text{clipped noise}).
-$$
+```
 
 Using the smaller critic reduces overestimation; delayed actor updates let the
 critics settle between policy changes. See the primary
@@ -162,10 +162,10 @@ critics settle between policy changes. See the primary
 
 ### SAC: value both reward and action entropy
 
-$$
+```math
 J(\pi)=\mathbb{E}\left[\sum_t\gamma^t
 \bigl(r_t+\alpha\mathcal{H}(\pi(\cdot\mid s_t))\bigr)\right].
-$$
+```
 
 Entropy $\mathcal{H}$ measures distributional spread. SAC rewards task success
 and, weighted by temperature $\alpha$, retaining multiple plausible actions.
@@ -282,3 +282,38 @@ change your mind:
 Then make a two-column list: what the learning algorithm decides versus what
 the system architecture must decide. Continue with
 [PPO from equations to code](05_ppo_from_equations_to_code.md).
+
+## 4.14 Folded solutions
+
+<details>
+<summary>Show reference answers to Section 4.13</summary>
+
+1. **Cart-pole:** begin with tabular Q-learning after discretization or DQN for
+   a neural baseline. Unlimited simulation and two discrete actions fit value
+   learning. A continuous-action variant or poor pixel sample efficiency would
+   motivate an actor-critic or representation change.
+2. **Microduck:** begin with PPO. Its continuous action and 4,096 cheap parallel
+   simulators make fresh on-policy data practical. A matched-budget experiment
+   showing better robustness or wall-clock cost from SAC/TD3 would change the
+   choice.
+3. **Fixed arm dataset:** start with behavior cloning, then compare IQL or CQL
+   if rewards and coverage support offline improvement. Permission for safe
+   online interaction would open a separate fine-tuning phase.
+4. **Multimodal visual manipulation:** start with a diffusion or other
+   multimodal imitation policy. Plain squared-error BC may average incompatible
+   grasps. Additional reward-bearing data could justify offline RL.
+5. **Known constrained rover:** start with model-predictive control (MPC), which
+   can use the known model and express constraints. Learn a residual/model only
+   if held-out traces reveal systematic error the baseline cannot handle.
+6. **Changing payload:** start with a history-conditioned/adaptive locomotion
+   actor, using privileged teacher information only during training. If the
+   payload is measured directly, explicit estimation plus a robust controller
+   may be simpler.
+
+The learning algorithm decides how experience changes a policy, value, or
+model. The architecture still decides sensor/calibration ownership, control
+rate, action semantics, planner decomposition, hard limits, watchdog, E-stop,
+compute placement, data privacy, and fallback. Algorithm selection cannot make
+those system decisions disappear.
+
+</details>

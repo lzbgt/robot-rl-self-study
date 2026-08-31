@@ -200,9 +200,9 @@ correcting the measurement it receives.
 The actor emits 14 floating-point values. The joint-position action uses
 `scale=1.0` and the model's default joint pose as its offset. Conceptually:
 
-$$
+```math
 q^{target} = q^{HOME} + a
-$$
+```
 
 The exact action manager also applies its configured ordering and any limits.
 The target then enters the BAM actuator model; it is not an ideal instantaneous
@@ -292,9 +292,37 @@ policy you evaluate or deploy.
 4. Find the actor and critic hidden layers in `MicroduckRlCfg`.
 5. Explain which of those objects exists during real ONNX inference.
 
-Expected answer for step 5: the actor and its observation normalizer are
-deployed. The critic, reward manager, PPO optimizer, simulator randomization,
-and curricula are training infrastructure.
-
 Continue with
 [Microduck setup and the first experiment](09_microduck_setup_and_first_experiment.md).
+
+## 8.12 Folded lab solution
+
+<details>
+<summary>Show a reference trace for Section 8.11</summary>
+
+1. `uv run list-envs` proves registration through the installed project rather
+   than a filename guess. Preserve the exact task ID it prints.
+2. `tasks/__init__.py` registers `Mjlab-Velocity-Flat-MicroDuck` with
+   `make_microduck_velocity_env_cfg()`, a play configuration, `MicroduckRlCfg`,
+   and `MicroduckOnPolicyRunner`.
+3. Valid examples include the `foot_height_scan` terrain ray sensor; `twist`
+   command; `track_linear_velocity` reward; `nan_state` termination; and
+   `action_rate_weight` curriculum. The important result is the path from
+   factory to a named manager term, not memorizing these examples.
+4. Actor and critic both use hidden dimensions `(512, 256, 128)` with ELU
+   activation and observation normalization. Their inputs differ because the
+   critic may receive privileged observations.
+5. Real ONNX inference deploys the actor and its actor-observation normalizer.
+   The critic, reward/termination/event/curriculum managers, rollout storage,
+   PPO losses, optimizer, and simulator randomization exist only to generate or
+   improve the checkpoint.
+
+A repeatable source trace is:
+
+```bash
+rg -n 'Mjlab-Velocity-Flat-MicroDuck' src/mjlab_microduck/tasks/__init__.py
+rg -n 'MicroduckRlCfg|hidden_dims|obs_normalization' \
+  src/mjlab_microduck/tasks/microduck_velocity_env_cfg.py
+```
+
+</details>

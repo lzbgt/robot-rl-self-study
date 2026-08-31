@@ -12,15 +12,15 @@ number before running code is much more educational than only reading it.
 
 A **scalar** is one number, such as the reward at one instant:
 
-$$
+```math
 r_t = 1.7.
-$$
+```
 
 A **vector** is an ordered list. A simple mobile-robot command might be
 
-$$
+```math
 c_t = [v_x, v_y, \omega_z] = [0.2, 0.0, -0.4].
-$$
+```
 
 The order is part of the interface. Swapping $v_x$ and $v_y$ does not merely
 rename two values; it asks for a different physical motion.
@@ -28,16 +28,16 @@ rename two values; it asks for a different physical motion.
 A **matrix** is a rectangular array. A neural-network layer maps an input
 vector $x$ to an output vector $z$ using a weight matrix $W$ and bias $b$:
 
-$$
+```math
 z = Wx + b.
-$$
+```
 
 If $x$ has 61 values and the layer has 512 neurons, then
 
-$$
+```math
 x\in\mathbb{R}^{61},\quad W\in\mathbb{R}^{512\times61},
 \quad b\in\mathbb{R}^{512},\quad z\in\mathbb{R}^{512}.
-$$
+```
 
 Read $\mathbb{R}^{61}$ as “a vector of 61 real numbers.” The matrix shape says
 512 rows, one per output, and 61 columns, one per input. Shape reasoning catches
@@ -73,9 +73,9 @@ units or frame still produces a physically wrong action.
 
 A **function** maps an input to an output. A policy is a function:
 
-$$
+```math
 a_t = \pi_\theta(o_t).
-$$
+```
 
 - $o_t$ is the observation at time $t$;
 - $a_t$ is the action;
@@ -96,16 +96,16 @@ random commands, randomized simulation, and exploration.
 
 A **random variable** is a numeric outcome of an uncertain process. We write
 
-$$
+```math
 X\sim p(x)
-$$
+```
 
 as “$X$ is sampled from probability distribution $p$.” A Gaussian (normal)
 distribution is written
 
-$$
+```math
 X\sim\mathcal{N}(\mu,\sigma^2),
-$$
+```
 
 where $\mu$ is the mean and $\sigma$ is the standard deviation. Larger
 $\sigma$ means more spread.
@@ -113,10 +113,10 @@ $\sigma$ means more spread.
 During training, a continuous policy commonly produces a mean action and a
 standard deviation, then samples:
 
-$$
+```math
 a_t\sim\pi_\theta(\cdot\mid o_t)
-     = \mathcal{N}(\mu_\theta(o_t),\operatorname{diag}(\sigma^2)).
-$$
+     = \mathcal{N}(\mu_\theta(o_t),\mathrm{diag}(\sigma^2)).
+```
 
 Read this as: “given observation $o_t$, the network proposes the center of an
 action distribution, and an action is sampled from it.” During deployment,
@@ -134,9 +134,9 @@ conditional distribution rather than one fixed action distribution.
 The **expectation** $\mathbb{E}[X]$ is a probability-weighted average. For a
 six-sided die,
 
-$$
+```math
 \mathbb{E}[X] = \frac{1+2+3+4+5+6}{6}=3.5.
-$$
+```
 
 No roll produces 3.5. Expectation describes the long-run average, not a
 guaranteed single result. Likewise, maximizing expected return does not
@@ -147,9 +147,9 @@ measurement and safety handling.
 
 Variance measures spread around the mean:
 
-$$
-\operatorname{Var}(X)=\mathbb{E}[(X-\mathbb{E}[X])^2].
-$$
+```math
+\mathrm{Var}(X)=\mathbb{E}[(X-\mathbb{E}[X])^2].
+```
 
 Two policies can have the same mean return while one fails violently in 10% of
 trials. Reporting only the mean hides that distinction.
@@ -159,18 +159,18 @@ trials. Reporting only the mean hides that distinction.
 For independent events, probabilities multiply. Products of many numbers
 smaller than one become numerically tiny. Logarithms turn products into sums:
 
-$$
+```math
 \log(xy)=\log x+\log y.
-$$
+```
 
 The log-probability of a sampled action is convenient to differentiate. A key
 identity is
 
-$$
+```math
 \nabla_\theta \log \pi_\theta(a\mid o)
 = \frac{\nabla_\theta\pi_\theta(a\mid o)}
        {\pi_\theta(a\mid o)}.
-$$
+```
 
 You do not need to memorize the fraction yet. The practical idea is that the
 gradient can adjust the probability of actions that were actually sampled.
@@ -182,47 +182,47 @@ it down.
 The derivative of a scalar function says how its output changes for a small
 input change. If
 
-$$
+```math
 y=x^2,
-$$
+```
 
 then
 
-$$
+```math
 \frac{dy}{dx}=2x.
-$$
+```
 
 At $x=3$, the derivative is 6. Increasing $x$ by approximately 0.01 increases
 $y$ by approximately $6\times0.01=0.06$.
 
 A **partial derivative** changes one input while holding others fixed. For
 
-$$
+```math
 f(x,y)=x^2+3xy,
-$$
+```
 
-$$
+```math
 \frac{\partial f}{\partial x}=2x+3y,
 \qquad
 \frac{\partial f}{\partial y}=3x.
-$$
+```
 
 A **gradient** collects all partial derivatives:
 
-$$
+```math
 \nabla f =
 \begin{bmatrix}
 \partial f/\partial x\\
 \partial f/\partial y
 \end{bmatrix}.
-$$
+```
 
 The gradient points toward the locally steepest increase. To minimize a loss
 $L(\theta)$, gradient descent takes a small step in the opposite direction:
 
-$$
+```math
 \theta_{new}=\theta_{old}-\alpha\nabla_\theta L,
-$$
+```
 
 where $\alpha$ is the **learning rate**, the step-size hyperparameter.
 
@@ -230,15 +230,15 @@ where $\alpha$ is the **learning rate**, the step-size hyperparameter.
 
 Let $L(w)=(w-4)^2$ and start at $w=1$.
 
-$$
+```math
 \frac{dL}{dw}=2(w-4)=-6.
-$$
+```
 
 With $\alpha=0.1$:
 
-$$
+```math
 w_{new}=1-0.1(-6)=1.6.
-$$
+```
 
 The update moves $w$ toward 4. A huge learning rate could overshoot; a tiny one
 could make progress impractically slow.
@@ -247,23 +247,23 @@ could make progress impractically slow.
 
 Neural networks compose functions. Suppose
 
-$$
+```math
 u=wx,\qquad y=\tanh(u),\qquad L=(y-y^*)^2.
-$$
+```
 
 The **chain rule** multiplies local sensitivities along the path:
 
-$$
+```math
 \frac{dL}{dw}
 =\frac{dL}{dy}\frac{dy}{du}\frac{du}{dw}.
-$$
+```
 
 Substitute each derivative:
 
-$$
+```math
 \frac{dL}{dw}
 =2(y-y^*)\,(1-\tanh^2(u))\,x.
-$$
+```
 
 **Backpropagation** is an efficient application of this chain rule through a
 computation graph. Automatic differentiation libraries such as PyTorch compute
@@ -274,9 +274,9 @@ gradients, saturation, and unintended objectives.
 
 A feed-forward layer is
 
-$$
+```math
 h=\phi(Wx+b),
-$$
+```
 
 where $\phi$ is an **activation function** applied element by element. Without
 nonlinear activations, many stacked linear layers collapse to one linear map.
@@ -333,9 +333,9 @@ Suppose one observation ranges around 0.01 and another around 1000. The same
 weight scale treats them very differently. Observation normalization maintains
 running mean $\mu$ and variance $\sigma^2$, then computes approximately
 
-$$
+```math
 \hat{o}=\frac{o-\mu}{\sqrt{\sigma^2+\epsilon}}.
-$$
+```
 
 $\epsilon$ is a small constant that avoids division by zero. Normalization can
 improve optimization, but it becomes part of the learned input contract. If
@@ -404,3 +404,49 @@ The small bandit example in
 uses expectation, sampling, and an incremental mean without any neural network.
 Run it before continuing with
 [Bellman methods from tables to DQN](03_bellman_and_value_learning.md).
+
+## 2.14 Folded solutions
+
+<details>
+<summary>Show answers to Section 2.13</summary>
+
+1. Multiply every axis:
+
+   ```math
+   24\times4096\times61=5{,}996{,}544
+   ```
+
+   These are scalar entries, not independent trajectories; the batch still has
+   24 correlated time positions per environment.
+2. Action 0.31 is only $0.01/0.1=0.1$ standard deviations from the mean. Action
+   0.8 is $(0.8-0.3)/0.1=5$ standard deviations away, so 0.31 is vastly more
+   typical under that Gaussian.
+3. The gradient at $w=1$ is $2(w+2)=6$. Gradient descent gives
+   $w_{new}=1-0.25(6)=-0.5$. A direct check is:
+
+   ```python
+   w = 1.0
+   learning_rate = 0.25
+   gradient = 2.0 * (w + 2.0)
+   w -= learning_rate * gradient
+   assert w == -0.5
+   ```
+
+4. Equal means do not imply equal distributions. One policy may score
+   consistently while another mixes excellent trials with rare destructive
+   failures. Report quantiles, failure categories, interventions, and raw
+   trials in addition to expected return.
+5. One radian is about 57.3 degrees. Feeding degree-valued numbers into a model
+   trained on radians changes its input scale and distribution, often driving
+   normalized features far outside training experience and producing unsafe
+   actions.
+6. Backpropagation applies the chain rule from the final loss toward earlier
+   operations. It multiplies each downstream sensitivity by each local
+   derivative, accumulating how a small change in every weight would change
+   the loss. The optimizer then uses those gradients to update the weights.
+7. The actor learned a function of normalized observations, not raw sensor
+   numbers. Mean, variance, clipping, epsilon, order, and units therefore form
+   part of the deployed function and must travel with or be embedded in the
+   exported model.
+
+</details>

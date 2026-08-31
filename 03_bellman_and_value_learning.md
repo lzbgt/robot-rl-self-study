@@ -20,10 +20,10 @@ consequence. The learner must balance:
 If action $a$ has been selected $N(a)$ times, an incremental sample-average
 estimate is
 
-$$
+```math
 Q_{new}(a)=Q_{old}(a)+\frac{1}{N(a)}
             \left(r-Q_{old}(a)\right).
-$$
+```
 
 Read the term in parentheses as **prediction error**: observed reward minus
 the old prediction. The $1/N(a)$ step size shrinks as evidence accumulates.
@@ -41,16 +41,16 @@ An action changes the next state and therefore future choices.
 For a policy $\pi$, the **state-value function** is the expected discounted
 return starting from state $s$:
 
-$$
+```math
 V^\pi(s)=\mathbb{E}_\pi[G_t\mid S_t=s].
-$$
+```
 
 The **action-value function**, usually called the Q-function, also fixes the
 first action:
 
-$$
+```math
 Q^\pi(s,a)=\mathbb{E}_\pi[G_t\mid S_t=s,A_t=a].
-$$
+```
 
 Plain language:
 
@@ -66,18 +66,18 @@ sampling. They are not promises for one rollout.
 
 Split the return into the next reward and the remaining future:
 
-$$
+```math
 G_t=R_{t+1}+\gamma G_{t+1}.
-$$
+```
 
 Taking expectations gives
 
-$$
+```math
 V^\pi(s)=
 \sum_a\pi(a\mid s)
 \sum_{s',r}p(s',r\mid s,a)
 \left[r+\gamma V^\pi(s')\right].
-$$
+```
 
 Do not let the sums obscure the idea:
 
@@ -94,9 +94,9 @@ one-step lookahead using itself.
 Suppose a state has one action. It gives reward 2 and moves deterministically
 to a state worth 5. With $\gamma=0.9$:
 
-$$
+```math
 V(s)=2+0.9\times5=6.5.
-$$
+```
 
 If the next state were terminal, its future value would be zero and the answer
 would be 2.
@@ -105,17 +105,17 @@ would be 2.
 
 The optimal action-value function chooses the best next action:
 
-$$
+```math
 Q^*(s,a)=
 \sum_{s',r}p(s',r\mid s,a)
 \left[r+\gamma\max_{a'}Q^*(s',a')\right].
-$$
+```
 
 Once $Q^*$ is known, a greedy optimal policy chooses
 
-$$
+```math
 \pi^*(s)=\arg\max_a Q^*(s,a).
-$$
+```
 
 $\arg\max$ returns the action producing the largest value, not the value
 itself.
@@ -125,10 +125,10 @@ itself.
 **Dynamic programming** (DP) assumes the transition/reward model is known.
 Value iteration repeatedly applies an optimal Bellman backup:
 
-$$
+```math
 V_{k+1}(s)=\max_a\sum_{s',r}p(s',r\mid s,a)
 \left[r+\gamma V_k(s')\right].
-$$
+```
 
 Repeated backups propagate information backward from goals and hazards.
 
@@ -148,9 +148,9 @@ impossible. DP still provides the conceptual reference.
 **Monte Carlo** (MC) methods estimate value from complete sampled returns. If a
 state is visited and the later rewards are $1,0,3$, with $\gamma=0.9$:
 
-$$
+```math
 G_t=1+0.9(0)+0.9^2(3)=3.43.
-$$
+```
 
 The estimate can move toward 3.43 after the episode finishes. MC does not need
 a transition model and does not bootstrap from its own current value estimate.
@@ -160,15 +160,15 @@ But it must wait for an outcome and can have high variance.
 
 **Temporal-difference** (TD) learning updates from one transition:
 
-$$
+```math
 V(S_t)\leftarrow V(S_t)+\alpha\delta_t,
-$$
+```
 
 where
 
-$$
+```math
 \delta_t=R_{t+1}+\gamma V(S_{t+1})-V(S_t).
-$$
+```
 
 $\delta_t$ is the **TD error**:
 
@@ -184,13 +184,13 @@ estimate inside its own target is called **bootstrapping**.
 Let $V(S_t)=4$, reward $R_{t+1}=1$, $V(S_{t+1})=6$,
 $\gamma=0.9$, and $\alpha=0.1$.
 
-$$
+```math
 \delta_t=1+0.9(6)-4=2.4,
-$$
+```
 
-$$
+```math
 V(S_t)\leftarrow4+0.1(2.4)=4.24.
-$$
+```
 
 The experience was better than predicted, so the estimate rises.
 
@@ -200,18 +200,18 @@ SARSA is an on-policy TD control method. Its name lists the transition tuple:
 $S_t,A_t,R_{t+1},S_{t+1},A_{t+1}$. Its update target follows the action the
 behavior policy actually selects:
 
-$$
+```math
 Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha
 \left[R_{t+1}+\gamma Q(S_{t+1},A_{t+1})-Q(S_t,A_t)\right].
-$$
+```
 
 Q-learning is off-policy. Its target assumes the greedy next action even if
 the behavior policy explored:
 
-$$
+```math
 Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha
 \left[R_{t+1}+\gamma\max_aQ(S_{t+1},a)-Q(S_t,A_t)\right].
-$$
+```
 
 **On-policy** means learning about the behavior policy generating the data.
 **Off-policy** means the policy being learned can differ from the behavior
@@ -233,19 +233,19 @@ best.
 A robot camera produces too many possible observations for a table. A Deep
 Q-Network (DQN) approximates all discrete action values with a neural network:
 
-$$
+```math
 Q_\theta(o,a).
-$$
+```
 
 The squared TD loss for one sample is
 
-$$
+```math
 L(\theta)=
 \left(
 r+\gamma\max_{a'}Q_{\bar\theta}(o',a')
 -Q_\theta(o,a)
 \right)^2.
-$$
+```
 
 $\bar\theta$ denotes a slowly updated **target network**. Two important DQN
 mechanisms are:
@@ -326,3 +326,42 @@ history.
 
 Continue with [the RL algorithm map](04_rl_algorithm_families.md), where these
 dimensions become a practical selection framework.
+
+## 3.14 Folded solutions
+
+<details>
+<summary>Show answers to Section 3.13</summary>
+
+1. The three-step return is
+   $2+0.5(1)+0.5^2(4)=2+0.5+1=3.5$.
+2. The TD error is
+   $-1+0.9(5)-3=0.5$. Because it is positive, an update with positive learning
+   rate raises $V(s)$.
+3. A **model** predicts what the environment will do after an action. A
+   **value function** predicts accumulated future reward. A **policy** selects
+   or distributes actions. A system may learn any one, two, or all three.
+4. Q-learning's target uses the greedy next value, $\max_a Q(s',a)$, regardless
+   of which exploratory action the behavior policy actually selects next. The
+   behavior policy supplies coverage; the backup defines the target policy.
+5. The deadly triad is function approximation, bootstrapping, and off-policy
+   learning. DQN mitigates instability with a replay buffer and a temporarily
+   fixed target network; neither is a universal convergence guarantee.
+6. A 14D continuous vector has infinitely many candidates, so ordinary DQN
+   cannot enumerate every action to compute a maximum. Continuous actor-critic
+   methods learn an actor that proposes the maximizing action instead.
+7. Hidden ground friction is one example. Recent wheel/contact history or a
+   learned adaptation latent can infer its effect; an additional force/slip
+   sensor can expose it more directly. Motor temperature, payload, and backlash
+   are other valid examples.
+
+The arithmetic behind answers 1 and 2 can be checked with:
+
+```python
+discount = 0.5
+three_step_return = 2 + discount * 1 + discount**2 * 4
+td_error = -1 + 0.9 * 5 - 3
+assert three_step_return == 3.5
+assert td_error == 0.5
+```
+
+</details>

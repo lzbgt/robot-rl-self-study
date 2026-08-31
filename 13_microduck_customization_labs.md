@@ -308,3 +308,50 @@ After this book, read code and experiments in this order:
 
 Return to the [book index](README.md) whenever a new experiment crosses from
 task design into training or deployment.
+
+## Folded reference outcomes
+
+<details>
+<summary>Show the minimum acceptable result for Labs 0–7</summary>
+
+- **Lab 0:** a pinned commit/config/checkpoint reproduces the baseline evaluator
+  within declared stochastic uncertainty. A video alone is insufficient.
+- **Lab 1:** the resolved command distribution changes exactly one intended
+  bucket/range; exact zero remains explicitly sampled; a configuration test
+  locks the values.
+- **Lab 2:** the helper's sign and boundary behavior pass as pure tensor tests,
+  its configuration weight has the intended sign, and every logged weighted
+  penalty remains nonpositive.
+- **Lab 3:** the new task inherits the closest proven template, preserves the
+  61D/14D deployment family contract when intended, resolves all joint/sensor
+  selectors, and passes a five-iteration export smoke.
+- **Lab 4:** the stage changes only after measured competence, uses environment
+  steps correctly, and does not create a repeatable metric cliff at its
+  boundary.
+- **Lab 5:** either the modular planner proves local stop/clearance/freshness
+  while retaining 61D, or a new exteroceptive schema is explicitly versioned;
+  simply rendering obstacles is rejected.
+- **Lab 6:** nominal actuator parameters are fit on one trace and validated on
+  held-out traces; randomization represents residual uncertainty rather than a
+  guess.
+- **Lab 7:** a machine-readable per-case result, aggregate with uncertainty,
+  failure taxonomy, and sampled videos can be regenerated from one command.
+
+A pure reward helper and wiring test can follow this pattern:
+
+```python
+def limit_proximity_cost(q, lower, upper, margin):
+    distance = minimum(q - lower, upper - q)
+    return maximum(0.0, margin - distance) / margin
+
+def test_limit_cost_is_zero_away_from_limits():
+    assert limit_proximity_cost(0.0, -1.0, 1.0, 0.1) == 0.0
+
+def test_limit_cost_grows_near_upper_limit():
+    assert limit_proximity_cost(0.95, -1.0, 1.0, 0.1) > 0.0
+```
+
+Adapt this to Torch and repository conventions; it illustrates separation of
+the mathematical value from simulator-manager data extraction.
+
+</details>

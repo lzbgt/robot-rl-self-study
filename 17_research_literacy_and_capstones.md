@@ -122,15 +122,15 @@ meaningfully different outcomes across seeds.
 
 For returns $x_1,\ldots,x_n$, the sample mean is
 
-$$
+```math
 \bar{x}=\frac{1}{n}\sum_i x_i.
-$$
+```
 
 The sample standard deviation is
 
-$$
+```math
 s=\sqrt{\frac{1}{n-1}\sum_i(x_i-\bar{x})^2}.
-$$
+```
 
 Neither says everything about skewed failures. Also report median, quantiles,
 success rate, and named failure categories.
@@ -367,3 +367,67 @@ Continue with the [detailed paper seminars](18_detailed_paper_seminars.md), then
 use [Chapter 20](20_glossary_and_worked_problems.md) for terminology and worked
 checks before returning to the capstone whose deliverable you cannot yet
 produce.
+
+## 17.17 Folded capstone reference checks
+
+<details>
+<summary>Show reference mechanisms and completion criteria for Capstones A–E</summary>
+
+These are not single “correct” experiment results. They are reference checks
+that make an incomplete or unsupported submission visible.
+
+**Capstone A — SARSA.** The on-policy target uses the action actually selected
+by the exploratory policy at the next state:
+
+```math
+Q(s_t,a_t)\leftarrow Q(s_t,a_t)+\alpha
+\left[r_t+\gamma Q(s_{t+1},a_{t+1})-Q(s_t,a_t)\right].
+```
+
+A minimal update helper is:
+
+```python
+def sarsa_update(q, s, a, reward, next_s, next_a, alpha, gamma):
+    target = reward + gamma * q[next_s][next_a]
+    q[s][a] += alpha * (target - q[s][a])
+```
+
+Q-learning instead uses `max(q[next_s])`. Near a costly cliff, SARSA learns
+about the consequences of its continuing exploration, so it can prefer a
+route with more clearance while training. Completion requires all requested
+seeds and cliff-entry counts; one attractive trajectory is not the result.
+
+**Capstone B — PPO clipping.** For positive advantage, the surrogate becomes
+flat above ratio $1+\epsilon$; for negative advantage it becomes flat below
+$1-\epsilon$. Clipping the objective does not impose a hard bound on the final
+network update because all samples share parameters and the optimizer takes
+multiple minibatch steps. A complete report shows the predicted piecewise
+curve, measured approximate KL and entropy, both clip settings under the same
+budget, and every seed.
+
+**Capstone C — Microduck pipeline.** A passing submission distinguishes a
+smoke test from learned locomotion, records the actor input as 61 values and
+the action as 14 values, uses the official export path that bakes observation
+normalization into ONNX, and rehearses that artifact on CPU. It explicitly
+states that the main actor has no obstacle sensor or global-goal input and that
+its body-pose reward has zero weight. Missing any one of configuration,
+checkpoint, normalizer, command ordering, or timing leaves the deployment
+contract unproved.
+
+**Capstone D — locomotion ablation.** The causal comparison changes exactly one
+named factor, holds training and evaluation budgets fixed, uses at least three
+seeds, and reports held-out conditions plus failure categories. If PPO and SAC
+receive different wall time, replay warm-up, observations, or reward code,
+label those as confounds rather than attributing the entire difference to the
+algorithm name. A negative result with complete artifacts passes; a best-seed
+claim without uncertainty does not.
+
+**Capstone E — Jump Rover.** Each phase needs a measurable exit gate. Examples
+are a recorded watchdog stop bound and thermal envelope for hardware truth;
+held-out excitation error for the digital twin; matched-baseline success and
+processor-in-loop worst-case execution time for learning; and demonstrated
+safe behavior under cloud timeout, stale perception, and invalid skill IDs for
+autonomy. A cloud-generated plan is never evidence that the real-time motor
+safety layer works. Every gate must name its artifact and rollback version.
+
+</details>

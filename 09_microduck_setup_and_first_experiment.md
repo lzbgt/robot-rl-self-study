@@ -294,3 +294,30 @@ This small report is the beginning of reproducible RL work.
 
 Continue with
 [the anatomy of a Microduck environment](10_microduck_environment_anatomy.md).
+
+## 9.14 Folded example report
+
+<details>
+<summary>Show an annotated first-experiment report</summary>
+
+This is a format example, not evidence from your machine. Replace every value
+and retain the commands/logs that support it.
+
+```text
+commit:                 FULL_GIT_SHA (plus dirty patch, if any)
+task ID:                Mjlab-Velocity-Flat-MicroDuck
+GPU and Torch/CUDA:     exact device / torch build / CUDA runtime
+command:                uv run train ... --num-envs 64 --max-iterations 5
+run directory:          logs/<experiment>/<timestamp-or-run>
+checkpoint:             exact model_*.pt and SHA-256
+actor/action shapes:    61 / 14, confirmed from runtime output
+tests result:            N passed, M skipped; paste command and date
+smoke result:            completed 5 iterations; finite observations/rewards
+viewer or video result:  pipeline rendered; locomotion quality not claimed
+first anomaly observed:  exact warning, metric, frame, or "none observed"
+```
+
+The important distinctions are observed versus assumed, pipeline success
+versus learned-skill success, and a mutable filename versus a content hash.
+
+</details>

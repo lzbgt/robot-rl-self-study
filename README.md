@@ -2,6 +2,11 @@
 
 [![Book checks](https://github.com/lzbgt/robot-rl-self-study/actions/workflows/book-check.yml/badge.svg)](https://github.com/lzbgt/robot-rl-self-study/actions/workflows/book-check.yml)
 
+Read the chapters in the [book map](#book-map), or download the complete
+**[PDF edition](dist/robot-rl-self-study.pdf)**. GitHub collapses chapter-end
+solutions so you can work independently; the PDF expands them for offline
+reading and printing.
+
 The canonical public home is
 [`lzbgt/robot-rl-self-study`](https://github.com/lzbgt/robot-rl-self-study).
 The Microduck case study is developed in the separate upstream project linked
@@ -169,6 +174,42 @@ uv run train Mjlab-Velocity-Flat-MicroDuck \
     --env.scene.num-envs 64 \
     --agent.max_iterations 5
 ```
+
+## PDF edition
+
+The committed [PDF](dist/robot-rl-self-study.pdf) is generated from the same 20
+chapter files as the GitHub edition. The builder converts fenced `math` blocks
+to native display equations, expands every folded answer at its chapter end,
+embeds the fonts, wraps code and URLs, and fails validation if TeX reports a
+line, table, or page overflow.
+
+On Arch Linux, install the reproducible toolchain with:
+
+```bash
+sudo pacman -S --needed pandoc-cli texlive-xetex texlive-latexextra \
+    texlive-fontsrecommended noto-fonts poppler
+```
+
+On Ubuntu or in a GitHub Actions-compatible environment:
+
+```bash
+sudo apt-get install pandoc texlive-xetex texlive-latex-extra \
+    texlive-fonts-recommended fonts-noto-core poppler-utils
+```
+
+Then build and verify the complete book:
+
+```bash
+make pdf        # writes dist/robot-rl-self-study.pdf
+make pdf-check  # also checks pages, contents, fonts, and the XeLaTeX log
+make check      # Markdown/examples plus the complete PDF pipeline
+```
+
+MiKTeX can be used on Windows if it provides `xelatex` on `PATH`; Pandoc and
+Poppler are still required. TeX Live is the tested Linux implementation. The
+complete Linux, macOS, Windows/MiKTeX, verification, and troubleshooting
+procedure is in [`pdf/README.md`](pdf/README.md). The source-preserving
+conversion is implemented by [`scripts/build_pdf.py`](scripts/build_pdf.py).
 
 ## What the Microduck walking policy actually learns
 

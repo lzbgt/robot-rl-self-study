@@ -24,6 +24,11 @@ EXAMPLES = (
     "tabular_q_learning.py",
     "ppo_clip_demo.py",
 )
+EXERCISE_HEADING_RE = re.compile(
+    r"^#{2,3} .*?(?:Exercises|Check your understanding|Lab:|exercise|"
+    r"What to reproduce|Microduck experiment|Capstone)",
+    re.IGNORECASE | re.MULTILINE,
+)
 
 
 def local_target(raw_target: str) -> str | None:
@@ -80,6 +85,75 @@ def check_chapter_index() -> list[str]:
     return errors
 
 
+def check_markdown_conventions() -> tuple[list[str], int, int]:
+    """Check GitHub math blocks and chapter-end folded solution placement."""
+
+    errors: list[str] = []
+    math_blocks = 0
+    solution_folds = 0
+    for markdown in sorted(BOOK_ROOT.glob("*.md")):
+        text = markdown.read_text(encoding="utf-8")
+        lines = text.splitlines()
+        math_start: int | None = None
+
+        for number, line in enumerate(lines, start=1):
+            stripped = line.strip()
+            if stripped == "$$":
+                errors.append(
+                    f"{markdown.name}:{number}: use a fenced ```math block, not $$"
+                )
+            if r"\operatorname" in line:
+                errors.append(
+                    f"{markdown.name}:{number}: use GitHub-safe \\mathrm notation"
+                )
+            if stripped == "```math":
+                if math_start is not None:
+                    errors.append(
+                        f"{markdown.name}:{number}: nested math fence opened; "
+                        f"previous start is line {math_start}"
+                    )
+                math_start = number
+                math_blocks += 1
+            elif stripped == "```" and math_start is not None:
+                math_start = None
+
+        if math_start is not None:
+            errors.append(
+                f"{markdown.name}:{math_start}: unclosed fenced math block"
+            )
+
+        opened = len(re.findall(r"^<details(?:\s[^>]*)?>$", text, re.MULTILINE))
+        closed = len(re.findall(r"^</details>$", text, re.MULTILINE))
+        if opened != closed:
+            errors.append(
+                f"{markdown.name}: details tags are unbalanced: {opened} open, "
+                f"{closed} closed"
+            )
+        solution_folds += opened
+
+        if re.search(r"^### Solution$", text, re.MULTILINE):
+            errors.append(
+                f"{markdown.name}: solutions must be folded at the chapter end, "
+                "not inline after a problem"
+            )
+
+        exercise_matches = list(EXERCISE_HEADING_RE.finditer(text))
+        if exercise_matches:
+            last_prompt = exercise_matches[-1].start()
+            folded = re.search(
+                r"^## .*Folded .*",
+                text[last_prompt:],
+                re.IGNORECASE | re.MULTILINE,
+            )
+            if folded is None:
+                errors.append(
+                    f"{markdown.name}: exercise/lab prompts need a later "
+                    "chapter-end folded solution or rubric"
+                )
+
+    return errors, math_blocks, solution_folds
+
+
 def run_examples() -> list[str]:
     errors: list[str] = []
     for name in EXAMPLES:
@@ -105,7 +179,8 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    errors = check_local_links() + check_chapter_index()
+    convention_errors, math_blocks, solution_folds = check_markdown_conventions()
+    errors = check_local_links() + check_chapter_index() + convention_errors
     if not args.skip_examples:
         errors += run_examples()
     if errors:
@@ -113,7 +188,10 @@ def main() -> int:
             print(f"BOOK_CHECK_ERROR: {error}", file=sys.stderr)
         return 1
 
-    print("BOOK_CHECK_OK: 20 chapters, local links, and examples are valid")
+    print(
+        "BOOK_CHECK_OK: 20 chapters, local links, examples, "
+        f"{math_blocks} math blocks, and {solution_folds} solution folds are valid"
+    )
     return 0
 
 

@@ -91,9 +91,9 @@ contract, training cost, runtime compute, failure modes, and sim-to-real burden.
 
 A visual encoder maps an image $I_t$ to a smaller feature vector:
 
-$$
+```math
 z_t=f_\psi(I_t).
-$$
+```
 
 The encoder can be:
 
@@ -118,9 +118,9 @@ terms describe scope and reuse, not guaranteed general intelligence.
 A Vision-Language-Action (VLA) policy typically maps images and language,
 sometimes proprioception, to robot actions or action tokens:
 
-$$
+```math
 a_{t:t+H}=\pi(I_{t-k:t},\text{language},q_t).
-$$
+```
 
 Most VLA pretraining is imitation/supervised sequence modeling on robot
 demonstrations, not classical online RL. RL may later fine-tune preferences or
@@ -288,7 +288,7 @@ if obstacle_map.invalid:
 Thresholds need system-level validation. The principle is that uncertainty
 affects permitted behavior rather than being logged and ignored.
 
-## 16.14 Jump Rover architecture exercise
+## 16.14 Worked Jump Rover architecture example
 
 For a wheeled-leg rover with an SG2002 brain and a realtime motion MCU:
 
@@ -318,3 +318,55 @@ realtime-controller evidence.
 8. Give three held-out tests for a person-following perception system.
 
 Continue with [research literacy and capstone projects](17_research_literacy_and_capstones.md).
+
+## 16.16 Folded solutions
+
+<details>
+<summary>Show reference answers to Section 16.15</summary>
+
+1. Rendering affects what a human sees. The actor can respond only to tensors
+   actually included in its observation. Microduck's 61D actor has no pixels,
+   depth, range, or obstacle map.
+2. A modular design lets local perception/planning convert geometry into twist
+   commands for the existing fast policy; components are easier to test and
+   the 61D contract survives. End-to-end depth-to-joint control may coordinate
+   tighter maneuvers but needs far more data, a new runtime schema, sensor
+   randomization, latency proof, and independent safety.
+3. A VLA is usually trained to predict actions from logged vision/language/
+   action demonstrations with a supervised sequence loss. A neural policy does
+   not become RL unless reward-bearing interaction or an RL objective actually
+   updates it.
+4. One bounded future option could be:
+
+   ```json
+   {
+     "skill": "follow_person",
+     "track_id": "person.bruce",
+     "following_distance_m": 1.2,
+     "max_speed_mps": 0.15,
+     "deadline_ms": 1500,
+     "stop_if": {
+       "track_age_ms_gt": 200,
+       "map_age_ms_gt": 200,
+       "minimum_clearance_m_lt": 0.35
+     }
+   }
+   ```
+
+   A local signed schema, identity/consent rule, planner, and stop path must
+   validate it. There is no PWM, torque, wheel speed, or servo target.
+5. Reject a response that arrives after its bound or revalidate it against the
+   current world and issue a fresh request. Never execute stale semantic intent
+   merely because the JSON was valid when generated.
+6. Measure capture/exposure, preprocessing, queueing, inference mean/tail/WCET,
+   postprocessing, transport, planner, actuation delivery, total observation
+   age, jitter, missed deadlines, and fallback transition.
+7. A minimal manifest needs policy/model hashes, training commit, robot/model
+   revision, input/output schemas, normalization, action scaling, policy rate,
+   maximum input age, inference WCET, validated operating envelope, exclusions,
+   calibration, evaluator report, and rollback artifact.
+8. Hold out a person/appearance, lighting/background, and motion/occlusion
+   pattern. Also test crossing identities and complete track loss; report false
+   follow, missed follow, ID switch, age, localization error, and stop latency.
+
+</details>

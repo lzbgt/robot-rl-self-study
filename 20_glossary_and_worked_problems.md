@@ -340,16 +340,6 @@ and commands. A wrong total means the network/runtime contract is broken.
 Add the main terms: angular velocity 3, projected gravity 3, joint positions
 14, joint velocities 14, previous actions 14, and command block 13.
 
-### Solution
-
-$$
-3 + 3 + 14 + 14 + 14 + 13 = 61
-$$
-
-The first 48 values are proprioception/history-like action context, and the
-last 13 are intention. With 4,096 environments the actor input tensor is
-`(4096, 61)`.
-
 ## 20.3 Worked problem 2: timestep and policy rate
 
 ### Background
@@ -361,26 +351,6 @@ often using action decimation.
 
 Physics timestep is 0.005 s and decimation is 4. Find the policy period and
 frequency. How long is a 500-step video?
-
-### Solution
-
-$$
-\Delta t_{policy}=0.005\times4=0.020\text{ s}
-$$
-
-Frequency is the inverse of period:
-
-$$
-f=\frac{1}{0.020}=50\text{ Hz}
-$$
-
-Five hundred policy steps last:
-
-$$
-500\times0.020=10\text{ s}
-$$
-
-This is why a 500-step recorded rollout is a 10-second behavior sample.
 
 ## 20.4 Worked problem 3: discounted return
 
@@ -394,20 +364,6 @@ $\gamma$. Use a short made-up reward sequence to see the calculation.
 At time 0, the next three rewards are 1, 1, and 1. Let $\gamma=0.99$ and stop
 after those three terms. What is $G_0$?
 
-### Solution
-
-$$
-G_0=1+0.99(1)+0.99^2(1)
-$$
-
-$$
-G_0=1+0.99+0.9801=2.9701
-$$
-
-The third reward still matters strongly because it is only two steps away.
-This truncated example is for arithmetic; real GAE also uses a critic estimate
-beyond a rollout boundary when appropriate.
-
 ## 20.5 Worked problem 4: PPO rollout size
 
 ### Background
@@ -420,20 +376,6 @@ environment.
 How many transitions are collected with 64 environments and 24 steps? With
 4,096 environments and 24 steps?
 
-### Solution
-
-$$
-64\times24=1,536
-$$
-
-$$
-4096\times24=98,304
-$$
-
-The five-iteration smoke train therefore performs real PPO updates but with a
-much smaller batch and duration than a full run. It validates plumbing, not
-locomotion quality.
-
 ## 20.6 Worked problem 5: Gaussian tracking reward
 
 ### Background
@@ -445,29 +387,6 @@ $\sigma$ is the error scale that still matters.
 
 For head tracking with $\sigma=0.5$ rad, calculate the per-joint reward at
 errors 0, 0.1, and 0.5 rad.
-
-### Solution
-
-At zero error:
-
-$$
-e^{-(0/0.5)^2}=1
-$$
-
-At 0.1 rad:
-
-$$
-e^{-(0.1/0.5)^2}=e^{-0.04}\approx0.961
-$$
-
-At 0.5 rad:
-
-$$
-e^{-(0.5/0.5)^2}=e^{-1}\approx0.368
-$$
-
-This shows why a wide standard deviation gives useful gradient far away but
-makes small errors relatively cheap.
 
 ## 20.7 Worked problem 6: PPO clipping
 
@@ -482,27 +401,6 @@ $\epsilon=0.2$.
 Old action probability is 0.10, new probability is 0.13, and advantage is +2.
 Compare unclipped and clipped contributions.
 
-### Solution
-
-$$
-r=0.13/0.10=1.3
-$$
-
-Unclipped:
-
-$$
-1.3\times2=2.6
-$$
-
-Clipped ratio is 1.2:
-
-$$
-1.2\times2=2.4
-$$
-
-The objective uses the more conservative value 2.4, removing the incentive to
-increase this already-favored sample further during that update.
-
 ## 20.8 Worked problem 7: penalty signs
 
 ### Background
@@ -515,23 +413,6 @@ product.
 Function A returns squared error `+0.4`. Function B returns negative absolute
 error `-0.4`. What weight sign makes each a penalty?
 
-### Solution
-
-For A, use a negative weight; for example:
-
-$$
--1.0\times+0.4=-0.4
-$$
-
-For B, use a positive weight:
-
-$$
-+1.0\times-0.4=-0.4
-$$
-
-Using a negative weight for B gives `+0.4`, rewarding the violation. Confirm
-all logged penalty contributions remain nonpositive.
-
 ## 20.9 Worked problem 8: why uniform sampling misses idle
 
 ### Background
@@ -543,13 +424,6 @@ zero but has probability zero of producing one exact point.
 
 Why does sampling each velocity uniformly from a range fail to train the exact
 deployment command `[0, 0, 0]`?
-
-### Solution
-
-The probability of any one exact real-number triple under continuous sampling
-is zero. “Very small” is also behaviorally different from an exact idle flag.
-The environment therefore needs an explicit zero-command bucket with nonzero
-probability.
 
 ## 20.10 Worked problem 9: command versus action
 
@@ -569,19 +443,6 @@ desired head yaw delta
 previous actor output
 ```
 
-### Solution
-
-```text
-desired forward speed            command (also included in observation)
-measured head joint angle        proprioceptive observation
-new left-knee position target    action after scale/offset mapping
-desired head yaw delta           command (also included in observation)
-previous actor output            observation/history context
-```
-
-Commands become part of the actor input; they are not outputs chosen by the
-motor policy.
-
 ## 20.11 Worked problem 10: obstacle-avoidance architecture
 
 ### Background
@@ -593,14 +454,6 @@ numeric observation.
 
 You add boxes to flat terrain and penalize collision, but keep the 61D actor
 unchanged. What can the policy learn, and what is missing?
-
-### Solution
-
-It may learn post-contact reactions or a generally conservative gait. It
-cannot deliberately steer around an unseen box before contact because no
-pre-contact obstacle information reaches the actor. Add a local
-perception/planner that changes twist commands, or create a versioned
-exteroceptive policy input and matching runtime.
 
 ## 20.12 Worked problem 11: actor versus critic information
 
@@ -614,14 +467,6 @@ while the actor remains deployable.
 Why can true base linear velocity improve the critic without being supplied to
 the actor? What would go wrong if the actor depended on it?
 
-### Solution
-
-The critic is discarded after training, so privileged velocity can improve its
-value/advantage estimates without becoming a runtime input. If the actor used
-perfect velocity but the real robot could not reproduce it with matching
-noise, delay, frame, and accuracy, deployment observations would come from a
-different distribution and behavior could fail.
-
 ## 20.13 Worked problem 12: design one controlled experiment
 
 ### Background
@@ -634,7 +479,293 @@ hypothesis and preserves a baseline.
 Turn-in-place fails in 60% of trials. Propose a controlled experiment using
 the command distribution rather than changing PPO and rewards together.
 
-### Solution
+## 20.14 Worked problem 13: a Q-learning backup
+
+### Background
+
+Q-learning trains the current action value toward immediate reward plus the
+best estimated next action value.
+
+### Problem
+
+The old value is $Q(s,a)=1$. A transition gives reward $-1$. At the next state,
+the three action values are $[2,5,4]$. Let $\gamma=0.9$ and learning rate
+$\alpha=0.2$. Compute the target, TD error, and updated Q-value.
+
+## 20.15 Worked problem 14: entropy changes the SAC objective
+
+### Background
+
+SAC values expected reward plus $\alpha$ times policy entropy.
+
+### Problem
+
+At one state, policy A has expected immediate score 5.0 and entropy 0.1.
+Policy B has score 4.8 and entropy 0.8. With $\alpha=0.5$, which has the larger
+one-step soft objective?
+
+## 20.16 Worked problem 15: behavior cloning averages modes
+
+### Background
+
+Squared-error regression predicts the conditional mean when data contains
+uncertainty or several labels for the same input.
+
+### Problem
+
+At an identical-looking observation, half the demonstrations steer left with
+action $-1$ and half steer right with action $+1$. What deterministic scalar
+action minimizes mean-squared error? Why may it be dangerous?
+
+## 20.17 Worked problem 16: world-model error over a horizon
+
+### Background
+
+Open-loop model predictions feed predicted state back into later predictions.
+
+### Problem
+
+A simple position model has a consistent 5 mm forward error per predicted step.
+Ignoring all nonlinear amplification, what bias accumulates over 25 open-loop
+steps? Why is this a lower-complexity estimate rather than a guarantee?
+
+## 20.18 Worked problem 17: mean return hides tail failure
+
+### Background
+
+Expected return is not a per-episode safety guarantee.
+
+### Problem
+
+Four hardware evaluations have returns $[100,100,100,-100]$, where the last is
+a damaging fall. Compute the mean, median, and non-fall success rate. What must
+the report say?
+
+## 20.19 Worked problem 18: stale asynchronous actions
+
+### Background
+
+An asynchronous VLA can predict chunks while another loop executes prior
+actions. The relevant latency is observation age when an action is applied.
+
+### Problem
+
+Image capture/preprocessing takes 20 ms, queue wait 15 ms, inference 70 ms, and
+transport 10 ms. How old is the observation when the first new action arrives?
+How many 50 Hz policy periods is that?
+
+## 20.20 Open exercises
+
+1. Derive the maximum 20-second episode length in policy steps.
+2. At iteration 1,000, what is the curriculum environment-step counter?
+3. Draw the path from `head_pose` command to a reward and to the ONNX input.
+4. Explain why body-pose UI controls do not prove the velocity checkpoint
+   learned body-pose control.
+5. Design a five-case evaluation battery for exact-zero standing.
+6. List three real measurements needed before transferring a policy to a new
+   actuator.
+7. Find one pure helper and its regression test in `tests/`; explain why the
+   pure form is easier to test than a full simulator wrapper.
+
+
+Return to the [book index](README.md) and repeat any lab whose terms or
+calculation are still unclear.
+
+## 20.21 Folded solutions
+
+Try each problem before opening its solution. The explanation—not only the final
+number—is the part to compare with your reasoning.
+
+<details>
+<summary>Problem 1: observation dimensions — show solution</summary>
+
+```math
+3 + 3 + 14 + 14 + 14 + 13 = 61
+```
+
+The first 48 values are proprioception/history-like action context, and the
+last 13 are intention. With 4,096 environments the actor input tensor is
+`(4096, 61)`.
+
+</details>
+
+<details>
+<summary>Problem 2: timestep and policy rate — show solution</summary>
+
+```math
+\Delta t_{policy}=0.005\times4=0.020\text{ s}
+```
+
+Frequency is the inverse of period:
+
+```math
+f=\frac{1}{0.020}=50\text{ Hz}
+```
+
+Five hundred policy steps last:
+
+```math
+500\times0.020=10\text{ s}
+```
+
+This is why a 500-step recorded rollout is a 10-second behavior sample.
+
+</details>
+
+<details>
+<summary>Problem 3: discounted return — show solution</summary>
+
+```math
+G_0=1+0.99(1)+0.99^2(1)
+```
+
+```math
+G_0=1+0.99+0.9801=2.9701
+```
+
+The third reward still matters strongly because it is only two steps away.
+This truncated example is for arithmetic; real GAE also uses a critic estimate
+beyond a rollout boundary when appropriate.
+
+</details>
+
+<details>
+<summary>Problem 4: PPO rollout size — show solution</summary>
+
+```math
+64\times24=1,536
+```
+
+```math
+4096\times24=98,304
+```
+
+The five-iteration smoke train therefore performs real PPO updates but with a
+much smaller batch and duration than a full run. It validates plumbing, not
+locomotion quality.
+
+</details>
+
+<details>
+<summary>Problem 5: Gaussian tracking reward — show solution</summary>
+
+At zero error:
+
+```math
+e^{-(0/0.5)^2}=1
+```
+
+At 0.1 rad:
+
+```math
+e^{-(0.1/0.5)^2}=e^{-0.04}\approx0.961
+```
+
+At 0.5 rad:
+
+```math
+e^{-(0.5/0.5)^2}=e^{-1}\approx0.368
+```
+
+This shows why a wide standard deviation gives useful gradient far away but
+makes small errors relatively cheap.
+
+</details>
+
+<details>
+<summary>Problem 6: PPO clipping — show solution</summary>
+
+```math
+r=0.13/0.10=1.3
+```
+
+Unclipped:
+
+```math
+1.3\times2=2.6
+```
+
+Clipped ratio is 1.2:
+
+```math
+1.2\times2=2.4
+```
+
+The objective uses the more conservative value 2.4, removing the incentive to
+increase this already-favored sample further during that update.
+
+</details>
+
+<details>
+<summary>Problem 7: penalty signs — show solution</summary>
+
+For A, use a negative weight; for example:
+
+```math
+-1.0\times+0.4=-0.4
+```
+
+For B, use a positive weight:
+
+```math
++1.0\times-0.4=-0.4
+```
+
+Using a negative weight for B gives `+0.4`, rewarding the violation. Confirm
+all logged penalty contributions remain nonpositive.
+
+</details>
+
+<details>
+<summary>Problem 8: why uniform sampling misses idle — show solution</summary>
+
+The probability of any one exact real-number triple under continuous sampling
+is zero. “Very small” is also behaviorally different from an exact idle flag.
+The environment therefore needs an explicit zero-command bucket with nonzero
+probability.
+
+</details>
+
+<details>
+<summary>Problem 9: command versus action — show solution</summary>
+
+```text
+desired forward speed            command (also included in observation)
+measured head joint angle        proprioceptive observation
+new left-knee position target    action after scale/offset mapping
+desired head yaw delta           command (also included in observation)
+previous actor output            observation/history context
+```
+
+Commands become part of the actor input; they are not outputs chosen by the
+motor policy.
+
+</details>
+
+<details>
+<summary>Problem 10: obstacle-avoidance architecture — show solution</summary>
+
+It may learn post-contact reactions or a generally conservative gait. It
+cannot deliberately steer around an unseen box before contact because no
+pre-contact obstacle information reaches the actor. Add a local
+perception/planner that changes twist commands, or create a versioned
+exteroceptive policy input and matching runtime.
+
+</details>
+
+<details>
+<summary>Problem 11: actor versus critic information — show solution</summary>
+
+The critic is discarded after training, so privileged velocity can improve its
+value/advantage estimates without becoming a runtime input. If the actor used
+perfect velocity but the real robot could not reproduce it with matching
+noise, delay, frame, and accuracy, deployment observations would come from a
+different distribution and behavior could fail.
+
+</details>
+
+<details>
+<summary>Problem 12: design one controlled experiment — show solution</summary>
 
 ```text
 hypothesis:
@@ -660,132 +791,85 @@ decision:
 Changing entropy, yaw reward, command range, and sample fraction together
 would prevent a causal conclusion.
 
-## 20.14 Worked problem 13: a Q-learning backup
+</details>
 
-### Background
-
-Q-learning trains the current action value toward immediate reward plus the
-best estimated next action value.
-
-### Problem
-
-The old value is $Q(s,a)=1$. A transition gives reward $-1$. At the next state,
-the three action values are $[2,5,4]$. Let $\gamma=0.9$ and learning rate
-$\alpha=0.2$. Compute the target, TD error, and updated Q-value.
-
-### Solution
+<details>
+<summary>Problem 13: a Q-learning backup — show solution</summary>
 
 The greedy next value is 5:
 
-$$
+```math
 y=-1+0.9(5)=3.5.
-$$
+```
 
 The TD error is target minus old estimate:
 
-$$
+```math
 \delta=3.5-1=2.5.
-$$
+```
 
 Update only partway using $\alpha$:
 
-$$
+```math
 Q_{new}=1+0.2(2.5)=1.5.
-$$
+```
 
 The estimate rises because this transition was better than the old prediction.
 
-## 20.15 Worked problem 14: entropy changes the SAC objective
+</details>
 
-### Background
+<details>
+<summary>Problem 14: entropy changes the SAC objective — show solution</summary>
 
-SAC values expected reward plus $\alpha$ times policy entropy.
-
-### Problem
-
-At one state, policy A has expected immediate score 5.0 and entropy 0.1.
-Policy B has score 4.8 and entropy 0.8. With $\alpha=0.5$, which has the larger
-one-step soft objective?
-
-### Solution
-
-$$
+```math
 A: 5.0+0.5(0.1)=5.05,
-$$
+```
 
-$$
+```math
 B: 4.8+0.5(0.8)=5.20.
-$$
+```
 
 The soft objective prefers B despite slightly lower expected task score because
 it retains more action diversity. This does not mean deployment must sample
 unsafe random actions; the entropy term shapes training, and execution policy/
 safety still must be specified.
 
-## 20.16 Worked problem 15: behavior cloning averages modes
+</details>
 
-### Background
-
-Squared-error regression predicts the conditional mean when data contains
-uncertainty or several labels for the same input.
-
-### Problem
-
-At an identical-looking observation, half the demonstrations steer left with
-action $-1$ and half steer right with action $+1$. What deterministic scalar
-action minimizes mean-squared error? Why may it be dangerous?
-
-### Solution
+<details>
+<summary>Problem 15: behavior cloning averages modes — show solution</summary>
 
 For prediction $x$:
 
-$$
+```math
 L(x)=\tfrac12(x+1)^2+\tfrac12(x-1)^2=x^2+1.
-$$
+```
 
 The derivative $2x$ is zero at $x=0$, the mean. If left and right both avoid an
 obstacle, the average can drive straight into it. More context or a multimodal
 policy must distinguish/represent the alternatives.
 
-## 20.17 Worked problem 16: world-model error over a horizon
+</details>
 
-### Background
+<details>
+<summary>Problem 16: world-model error over a horizon — show solution</summary>
 
-Open-loop model predictions feed predicted state back into later predictions.
-
-### Problem
-
-A simple position model has a consistent 5 mm forward error per predicted step.
-Ignoring all nonlinear amplification, what bias accumulates over 25 open-loop
-steps? Why is this a lower-complexity estimate rather than a guarantee?
-
-### Solution
-
-$$
+```math
 25\times5\text{ mm}=125\text{ mm}=0.125\text{ m}.
-$$
+```
 
 Real error need not add linearly. A biased position changes future contact and
 policy inputs, which can amplify, cancel, or redirect error. Receding-horizon
 replanning replaces imagined state with observation before the full horizon.
 
-## 20.18 Worked problem 17: mean return hides tail failure
+</details>
 
-### Background
+<details>
+<summary>Problem 17: mean return hides tail failure — show solution</summary>
 
-Expected return is not a per-episode safety guarantee.
-
-### Problem
-
-Four hardware evaluations have returns $[100,100,100,-100]$, where the last is
-a damaging fall. Compute the mean, median, and non-fall success rate. What must
-the report say?
-
-### Solution
-
-$$
+```math
 \text{mean}=\frac{100+100+100-100}{4}=50.
-$$
+```
 
 The sorted middle pair is $100,100$, so median is 100. Success is $3/4=75\%$.
 The attractive median hides one severe failure; even the mean does not label
@@ -793,56 +877,65 @@ its consequence. Report every trial, success/failure category, damage/safety
 intervention, and uncertainty. Four trials are too few for a reliable tail-risk
 estimate.
 
-## 20.19 Worked problem 18: stale asynchronous actions
+</details>
 
-### Background
+<details>
+<summary>Problem 18: stale asynchronous actions — show solution</summary>
 
-An asynchronous VLA can predict chunks while another loop executes prior
-actions. The relevant latency is observation age when an action is applied.
-
-### Problem
-
-Image capture/preprocessing takes 20 ms, queue wait 15 ms, inference 70 ms, and
-transport 10 ms. How old is the observation when the first new action arrives?
-How many 50 Hz policy periods is that?
-
-### Solution
-
-$$
+```math
 20+15+70+10=115\text{ ms}.
-$$
+```
 
 A 50 Hz period is 20 ms:
 
-$$
+```math
 115/20=5.75\text{ policy periods}.
-$$
+```
 
 The model acts from information nearly six local-control ticks old. A
 manipulator may tolerate that under slow receding-horizon execution; a disturbed
 balance loop likely cannot. Measure age/jitter and keep fast stabilization local.
 
-## 20.20 Open exercises
+</details>
 
-1. Derive the maximum 20-second episode length in policy steps.
-2. At iteration 1,000, what is the curriculum environment-step counter?
-3. Draw the path from `head_pose` command to a reward and to the ONNX input.
-4. Explain why body-pose UI controls do not prove the velocity checkpoint
-   learned body-pose control.
-5. Design a five-case evaluation battery for exact-zero standing.
-6. List three real measurements needed before transferring a policy to a new
-   actuator.
-7. Find one pure helper and its regression test in `tests/`; explain why the
-   pure form is easier to test than a full simulator wrapper.
+<details>
+<summary>Open exercises 1–7 — show solutions and reference checks</summary>
 
-Short answers for the first four:
+1. At 50 Hz, a 20-second episode contains
+   $20\text{ s}\times50\text{ Hz}=1{,}000$ policy steps.
+2. Curriculum steps count environment steps per rollout fragment, so iteration
+   1,000 corresponds to $1{,}000\times24=24{,}000$ environment steps.
+3. `CommandManager` samples `head_pose`; `generated_commands` appends its four
+   values after the 48 proprioceptive values and 3D twist command, so they
+   occupy actor indices 51–54. The `head_pose_tracking` reward reads the same
+   command and the four physical head/neck joint positions. Export rebuilds
+   this observation order, applies the saved normalizer, and embeds the actor
+   in ONNX. This shared source and ordering are why command, reward, and
+   deployment remain consistent.
+4. Interface presence is not a learned objective. The six body-pose inputs and
+   UI control can vary, but the main velocity recipe gives
+   `body_pose_tracking` weight zero. A checkpoint might ignore those inputs or
+   respond only through accidental correlations; testable command following
+   requires nonzero task data, reward, and held-out evaluation.
+5. A useful exact-zero battery includes: nominal quiet stand; randomized
+   initial tilt; a bounded push followed by recovery; held-out friction and
+   actuator-delay extremes; and a long-duration hold that exposes drift or
+   heating. For every case report fall rate, tilt, position drift, action
+   jitter, saturation, and recovery time across seeds—not just reward.
+6. At minimum measure command-to-motion delay/bandwidth, torque or force versus
+   command under load, and friction/deadband/backlash. Battery-voltage response,
+   saturation, speed limits, thermal behavior, and sensor noise are also part
+   of a defensible actuator model.
+7. One example is the following pure helper and its focused test:
 
-1. $20\text{ s}\times50\text{ Hz}=1,000$ policy steps.
-2. $1,000\times24=24,000$ environment steps.
-3. CommandManager → generated-command observation slice and
-   `head_pose_tracking` reward → actor input indices 51–54 → exported graph.
-4. Its six input slots and UI exist, but the main velocity reward weight for
-   body-pose tracking is zero; interface presence is not training evidence.
+   ```text
+   mdp.py::spin_wheel_differential_from_values
+   tests/test_spin.py::test_wheel_differential_from_values_is_pure
+   ```
 
-Return to the [book index](README.md) and repeat any lab whose terms or
-calculation are still unclear.
+   The helper receives tensors and constants directly, so the test can cover
+   its sign, scaling, and gating without constructing MuJoCo, managers,
+   sensors, or GPU state. The simulator wrapper can then be tested separately
+   for correct data extraction.
+
+</details>
