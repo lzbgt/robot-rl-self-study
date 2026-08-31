@@ -172,9 +172,17 @@ def main() -> int:
         r"Rerun to get cross-references right": "unresolved cross-reference pass",
     }
     for pattern, label in forbidden.items():
-        matches = re.findall(pattern, log)
+        matches = list(re.finditer(pattern, log))
         if matches:
-            errors.append(f"XeLaTeX log contains {len(matches)} {label} warning(s)")
+            locations: list[str] = []
+            for match in matches[:5]:
+                line_number = log.count("\n", 0, match.start()) + 1
+                line = log.splitlines()[line_number - 1].strip()
+                locations.append(f"line {line_number}: {line}")
+            errors.append(
+                f"XeLaTeX log contains {len(matches)} {label} warning(s): "
+                + "; ".join(locations)
+            )
 
     if errors:
         return report(errors)
