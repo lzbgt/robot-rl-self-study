@@ -1,6 +1,6 @@
 # How to Use This Book {#preface}
 
-**Edition 1.0.0 — 2026-09-01**
+**Edition 1.0.1 — 2026-09-01**
 
 This book is designed for active self-study. Read with a Python prompt, a
 notebook, or a robot simulator nearby. When an equation appears, first name

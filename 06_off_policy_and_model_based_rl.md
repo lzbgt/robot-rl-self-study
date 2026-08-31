@@ -433,11 +433,13 @@ without it. Training balances prediction terms and a Kullback–Leibler (KL)
 divergence that makes prior and posterior compatible:
 
 ```math
-L_{model}\approx
--\log p(o_t\mid h_t,z_t)
--\log p(r_t\mid h_t,z_t)
--\log p(c_t\mid h_t,z_t)
-+\beta D_{KL}(q(z_t\mid h_t,o_t)\,\|\,p(z_t\mid h_t)).
+\begin{aligned}
+L_{model}\approx{}&-\log p(o_t\mid h_t,z_t)
+                    -\log p(r_t\mid h_t,z_t)\\
+                  &-\log p(c_t\mid h_t,z_t)
+                    +\beta D_{KL}\!\left(q(z_t\mid h_t,o_t)\,\|\,
+                    p(z_t\mid h_t)\right).
+\end{aligned}
 ```
 
 $c_t$ represents continuation. Exact DreamerV3 losses include additional

@@ -1099,10 +1099,12 @@ $\phi_t\in[0,1)$. The policy observes robot state and phase, then produces joint
 targets. A representative tracking reward combines exponential similarities:
 
 ```math
-r_t=w_q\exp\left(-k_q\|q_t-\hat q(\phi_t)\|^2\right)
-   +w_v\exp\left(-k_v\|\dot q_t-\hat{\dot q}(\phi_t)\|^2\right)
-   +w_e\exp\left(-k_e\sum_j
-     \|p_t^j-\hat p^j(\phi_t)\|^2\right).
+\begin{aligned}
+r_t={}&w_q\exp\!\left(-k_q\|q_t-\hat q(\phi_t)\|^2\right)\\
+     &+w_v\exp\!\left(-k_v\|\dot q_t-\hat{\dot q}(\phi_t)\|^2\right)\\
+     &+w_e\exp\!\left(-k_e\sum_j
+       \|p_t^j-\hat p^j(\phi_t)\|^2\right).
+\end{aligned}
 ```
 
 The hats are reference quantities and the end-effector index is $j$. The

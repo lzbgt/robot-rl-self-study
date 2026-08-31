@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1 — 2026-09-01
+
+- Splits two long display equations at semantic boundaries so the PDF has no
+  horizontal overflow with both Ubuntu's Pandoc 3.1/TeX Live 2023 stack and
+  newer Pandoc/TeX Live releases.
+
 ## 1.0.0 — 2026-09-01
 
 First complete self-study edition.
