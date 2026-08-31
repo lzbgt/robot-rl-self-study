@@ -318,7 +318,7 @@ Outcome: gain semantic planning without surrendering physical authority.
 For every external project, preserve:
 
 ```yaml
-source_url: https://github.com/OWNER/REPO
+source_url: OFFICIAL_REPOSITORY_URL
 commit: full_commit_sha
 paper: exact_url_and_version
 license: code / weights / data / assets
