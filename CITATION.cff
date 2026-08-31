@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If this book helps your teaching or research, please cite this repository."
+title: "Robot Reinforcement Learning: From First Principles to Real Robots"
+type: book
+authors:
+  - family-names: Lu
+    given-names: Bruce
+    alias: lzbgt
+version: 0.1.0
+date-released: 2026-08-31
+license: Apache-2.0
+repository-code: "https://github.com/lzbgt/robot-rl-self-study"
+url: "https://github.com/lzbgt/robot-rl-self-study"
+abstract: >-
+  A beginner-friendly, code-backed self-study book on reinforcement learning
+  for robotics, from mathematical foundations through modern robot-learning
+  research, reproducibility, deployment, and sim-to-real engineering.
