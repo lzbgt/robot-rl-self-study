@@ -32,6 +32,9 @@ Simulation performance alone is not hardware-release evidence.
 - [ ] Evidence boundaries say what a paper or experiment does *not* establish.
 - [ ] Commands and code were run in a fresh or documented environment.
 - [ ] Local links and examples pass with `python scripts/check_book.py`.
+- [ ] Every chapter passes the multi-dimensional depth rubric: substantial
+      explanatory prose, at least eight equation/code mechanisms, a coherent
+      section progression, cross-links/sources, practice, and folded answers.
 - [ ] The full pipeline passes with `make check`; the PDF log contains no
       overfull box, missing-glyph, or unresolved-reference warning.
 - [ ] New exercises have explained answers, reference code, or a completion

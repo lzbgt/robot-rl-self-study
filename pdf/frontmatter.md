@@ -1,5 +1,7 @@
 # How to Use This Book {#preface}
 
+**Edition 1.0.0 — 2026-09-01**
+
 This book is designed for active self-study. Read with a Python prompt, a
 notebook, or a robot simulator nearby. When an equation appears, first name
 every symbol and predict how changing it would affect an experiment. Then work
@@ -47,7 +49,7 @@ usable in grayscale and for readers with color-vision differences.
 
 ## Suggested routes
 
-- **Theory first:** Chapters 1–7, the four small programs in `examples/`, and
+- **Theory first:** Chapters 1–7, the 13 runnable programs in `examples/`, and
   the worked problems in Chapter 20.
 - **Build and deploy:** Chapters 1–13, alongside a pinned Microduck checkout.
 - **Research literacy:** Chapters 14–20 after the foundations, recording the

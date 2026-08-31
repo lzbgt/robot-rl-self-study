@@ -4,6 +4,27 @@ Algorithm names can make reinforcement learning (RL) feel like a collection of
 unrelated inventions. Most methods can be located along a few design axes.
 Learning those axes is more durable than memorizing a leaderboard.
 
+### A dated lineage, not a leaderboard
+
+The major families answer recurring problems:
+
+| Period | Representative origin or milestone | Problem it made explicit |
+| --- | --- | --- |
+| 1950s | Bellman dynamic programming | recursive planning with a known model |
+| 1980s–1990s | actor-critic, Q-learning, REINFORCE | learn values or policies from sampled experience |
+| 2000s | natural policy gradient | account for how parameters alter a probability distribution |
+| 2013–2018 | Deep Q-Network, Deep Deterministic Policy Gradient, Trust Region Policy Optimization, Proximal Policy Optimization, Twin Delayed DDPG, Soft Actor-Critic | stabilize scalable neural discrete/continuous control |
+| 2019–2023 | conservative/implicit offline RL, Dreamer, TD-MPC | learn from fixed data or learned latent dynamics |
+| 2023–2026 | action generators, generalist policies, massive off-policy robot training | reuse diverse data and scale representations/control |
+
+Here **Deep Deterministic Policy Gradient (DDPG)** is the actor-critic precursor
+from which Twin Delayed DDPG addresses value-error failures; **Trust Region
+Policy Optimization (TRPO)** is the constrained-update precursor that motivates
+Proximal Policy Optimization's simpler surrogate. The dates locate ideas, not
+declare old methods obsolete. Proximal Policy Optimization (PPO) remains a
+strong robot baseline because an
+algorithm's value depends on the data and system around it.
+
 ## 4.1 First ask what data interaction is allowed
 
 ### Online RL
@@ -22,6 +43,33 @@ In **offline RL**, learning uses a fixed logged dataset and cannot request new
 transitions. It is attractive when robot data already exists or new exploration
 is dangerous. It is difficult because value estimates for actions absent from
 the dataset can be arbitrarily wrong.
+
+### The behavior distribution is part of the mathematics
+
+Let $\mu(a\mid s)$ be the **behavior policy** that collected data and
+$\pi(a\mid s)$ the **target policy** being evaluated or improved. For an
+expectation over actions at a covered state, importance sampling gives
+
+```math
+\mathbb{E}_{a\sim\pi}[f(a)]
+=\mathbb{E}_{a\sim\mu}
+\left[\frac{\pi(a\mid s)}{\mu(a\mid s)}f(a)\right].
+```
+
+Derivation for a discrete action set is substitution:
+
+```math
+\sum_a\mu(a\mid s)
+\frac{\pi(a\mid s)}{\mu(a\mid s)}f(a)
+=\sum_a\pi(a\mid s)f(a).
+```
+
+The ratio is valid only where $\mu(a\mid s)>0$ whenever $\pi(a\mid s)>0$.
+Large ratios create high variance. Full trajectory ratios multiply across
+time and can become unusably large or small. Modern off-policy algorithms
+therefore combine bootstrapping, clipping, conservative objectives, learned
+critics, and coverage assumptions rather than naively reweighting long robot
+trajectories.
 
 ### Imitation learning
 
@@ -47,6 +95,14 @@ The labels do not mean model-free robot design has no physics knowledge. A
 Proximal Policy Optimization (PPO) policy trained in MuJoCo relies heavily on a
 simulator model to generate data; the learning algorithm itself simply does
 not differentiate through or plan with a learned $f_\psi$ at runtime.
+
+A second distinction is **planning at decision time** versus **amortized
+control**. Model Predictive Control (MPC) optimizes an action sequence again at
+each state. A feed-forward actor spends compute during training so that a
+single network evaluation approximates a good decision later. Temporal
+Difference Learning for Model Predictive Control, second generation (TD-MPC2)
+uses both: a learned policy proposes actions and a learned model/value refines
+a local plan.
 
 Model-based methods can be more sample efficient because one transition helps
 learn dynamics reusable by many plans. Their danger is **model bias**: planning
@@ -133,6 +189,23 @@ model-predictive planning; the “2” identifies the later scalable method.
 This table is a map, not a ranking. Performance depends on implementation,
 task, data, compute, observation/action choices, and evaluation.
 
+### A unifying “what is fitted?” view
+
+Many method differences become concrete by locating the regression or
+optimization target:
+
+```text
+behavior cloning: observation -----------------> demonstrated action
+value learning:   state/action ----------------> Bellman return target
+policy gradient:  sampled log-probability -----> advantage-weighted objective
+world model:      state/history + action ------> next latent/reward/continuation
+offline RL:       fixed data -------------------> conservative value + extracted policy
+```
+
+This gives a code-reading strategy. Find the batch fields, construct the target,
+find the loss, then find which parameters receive gradients. Algorithm names
+matter less than these four concrete facts.
+
 ## 4.7 Four influential objectives in plain language
 
 ### DQN: make Q agree with a bootstrapped target
@@ -155,6 +228,42 @@ best next value.
 Increase probability for better-than-expected sampled actions and decrease it
 for worse ones, while clipping the incentive for a large probability-ratio
 change. Chapter 5 derives every term.
+
+### From natural gradient to TRPO to PPO
+
+An ordinary parameter step measures distance in weight coordinates. But the
+same weight change can barely alter one policy and radically alter another.
+The Kullback–Leibler (KL) divergence measures change in action distributions.
+Trust Region Policy Optimization poses a local problem of the form
+
+```math
+\max_\theta
+\mathbb{E}_{(s,a)\sim\pi_{old}}
+\left[
+\frac{\pi_\theta(a\mid s)}{\pi_{old}(a\mid s)}A^{\pi_{old}}(s,a)
+\right]
+```
+
+subject to
+
+```math
+\mathbb{E}_{s\sim\pi_{old}}
+[D_{KL}(\pi_{old}(\cdot\mid s)\,\|\,\pi_\theta(\cdot\mid s))]
+\leq\delta.
+```
+
+Near the old parameters, the KL curvature is approximated by the Fisher
+information matrix $F$. The natural-gradient direction is
+
+```math
+\Delta\theta\propto F^{-1}\nabla_\theta J.
+```
+
+TRPO approximately solves this constrained problem using conjugate gradients
+and a line search. PPO replaces that machinery with first-order clipped or KL-
+penalized surrogates that are easier to implement and batch. PPO is therefore
+best understood as a practical descendant of trust-region reasoning, not as a
+proof that clipping alone bounds every policy change.
 
 ### TD3: trust the smaller of two learned critics
 
@@ -197,7 +306,42 @@ Robot exploration must respect hardware. “Let the agent discover it” is not 
 safety plan. Most aggressive motor-skill exploration belongs in simulation,
 with a separately enforced hardware envelope.
 
-## 4.9 A practical selection procedure
+Exploration can also be reasoned about as uncertainty. For a simple bandit,
+an upper confidence bound (UCB) action score is
+
+```math
+\mathrm{UCB}(a)=\hat Q(a)+c\sqrt{\frac{\log t}{N(a)}},
+```
+
+where the second term is large for rarely tried actions. Deep robotics rarely
+uses this exact formula at every motor dimension, but the principle survives
+in ensembles, uncertainty bonuses, active system identification, goal
+sampling, and model-predictive exploration. Random action noise is only one
+possible information-acquisition strategy.
+
+## 4.9 The frontier as of 2026 is conditional
+
+No defensible source supports one algorithm as “the state of the art for robot
+intelligence.” The evaluated regimes are too different. A dated frontier map
+is more useful:
+
+| Regime | Strong current baselines or directions | Main unresolved pressure |
+| --- | --- | --- |
+| massively parallel proprioceptive locomotion | PPO/Robotic Systems Lab reinforcement learning (RSL-RL) recipes; emerging high-update off-policy SAC/TD3 variants | robustness and fair wall-clock/compute comparison |
+| scarce online physical interaction | SAC-style replay, model-based world models, residual/hybrid control | safety, resets, nonstationary hardware |
+| fixed logged robot data | behavior cloning, IQL, CQL, diffusion/action-chunk policies | coverage and out-of-distribution action error |
+| pixel control with online learning | Dreamer-family latent models, TD-MPC-family planning | contact/model error and runtime compute |
+| broad language-conditioned manipulation | transformer/diffusion/flow imitation plus selective RL fine-tuning | data provenance, embodiment transfer, calibrated evaluation |
+| safety-constrained control | constrained Markov Decision Process (MDP) objectives, shields, control-barrier filters, MPC | expectation constraints do not equal hard guarantees |
+
+The 2025 FastSAC/FastTD3 work is notable because it challenges the assumption
+that on-policy PPO is inherently the fastest choice under massive simulation;
+its training-time claim is tied to the reported simulator, update ratio,
+hardware, and humanoid tasks. The right response is a matched experiment, not
+automatic replacement. Chapters 6, 14–16, and 18 examine each regime using
+primary papers and official artifacts.
+
+## 4.10 A practical selection procedure
 
 Ask in this order:
 
@@ -219,12 +363,12 @@ Ask in this order:
 8. **What baseline must learning beat?** Start with a scripted or classical
    controller when one exists.
 
-## 4.10 Why PPO is sensible for Microduck
+## 4.11 Why PPO is sensible for Microduck
 
 Microduck has:
 
 - a 14D continuous action;
-- thousands of GPU-parallel simulated robots;
+- thousands of graphics processing unit (GPU)-parallel simulated robots;
 - inexpensive fresh rollouts;
 - dense task/recovery signals; and
 - a small actor needed for 50 Hz deployment.
@@ -237,7 +381,7 @@ PPO does not cause walking by itself. Robot model, observation, command
 distribution, reward, reset distribution, actuator dynamics, randomization,
 and curriculum define the experience from which PPO learns.
 
-## 4.11 Why a different robot may need a different method
+## 4.12 Why a different robot may need a different method
 
 Consider three projects:
 
@@ -260,7 +404,7 @@ continuous controller. A hierarchical architecture may use a planner or
 discrete policy above classical/RL motor skills. One monolithic algorithm is
 not required.
 
-## 4.12 Common selection mistakes
+## 4.13 Common selection mistakes
 
 - Choosing the newest paper before defining the observation and action.
 - Comparing algorithms with different reward, model, environment count, or
@@ -273,7 +417,7 @@ not required.
 - Using a generalist visual model in a hard realtime loop without measuring
   worst-case latency.
 
-## 4.13 Exercises
+## 4.14 Exercises
 
 For each scenario, select a starting algorithm and state what evidence would
 change your mind:
@@ -286,14 +430,31 @@ change your mind:
    planner.
 6. A legged robot whose payload changes during an episode.
 
+Then answer these mechanism questions:
+
+7. A behavior policy selects an action with probability 0.2 and the target
+   policy assigns it probability 0.5. Compute its importance ratio. What makes
+   a product of 100 such ratios dangerous?
+8. Explain why a small Euclidean change in neural-network weights does not
+   necessarily imply a small policy change. What quantity do trust-region
+   methods measure instead?
+9. For the same task, PPO uses 100 million transitions while SAC uses 10
+   million but takes twice the wall-clock time and three times the GPU energy.
+   Which is “more efficient”? Give a non-misleading report.
+10. Locate each system on two axes—model-free/model-based and online/offline:
+    PPO in simulation, behavior cloning from logs, Dreamer trained while
+    interacting, and MPC with an identified fixed model.
+11. A paper reports state-of-the-art mean reward on one simulator. List four
+    facts needed before choosing it for a physical biped.
+
 Then make a two-column list: what the learning algorithm decides versus what
 the system architecture must decide. Continue with
 [PPO from equations to code](05_ppo_from_equations_to_code.md).
 
-## 4.14 Folded solutions
+## 4.15 Folded solutions
 
 <details>
-<summary>Show reference answers to Section 4.13</summary>
+<summary>Show reference answers to Section 4.14</summary>
 
 1. **Cart-pole:** begin with tabular Q-learning after discretization or DQN for
    a neural baseline. Unlimited simulation and two discrete actions fit value
@@ -323,5 +484,31 @@ model. The architecture still decides sensor/calibration ownership, control
 rate, action semantics, planner decomposition, hard limits, watchdog, E-stop,
 compute placement, data privacy, and fallback. Algorithm selection cannot make
 those system decisions disappear.
+
+7. The ratio is $0.5/0.2=2.5$, so this sample receives greater target-policy
+   weight. A trajectory product $2.5^{100}$ is enormous; other paths can yield
+   products near zero. Such products create extreme variance and numerical
+   instability, and support failure occurs if behavior probability is zero.
+8. Neural policies are nonlinear and parameterized redundantly; local output
+   sensitivity depends on state and current weights. The same weight-space norm
+   can cause very different action-distribution changes. Trust-region methods
+   use a distributional distance, commonly expected Kullback–Leibler
+   divergence, and natural gradient incorporates its local curvature.
+9. SAC is five times more transition-efficient; PPO is twice as wall-clock
+   efficient and three times as energy/compute efficient under the stated
+   measurements. Neither is simply “more efficient.” Report all three axes,
+   final held-out performance, hardware, simulator throughput, update count,
+   and uncertainty across seeds.
+10. PPO in simulation is model-free at the learning/inference level and online
+    in data collection. Behavior cloning is offline and does not learn/use a
+    dynamics model. Interacting Dreamer is online and model-based because it
+    learns a world model. MPC with a fixed identified model is model-based
+    control but not necessarily RL; if it performs no learning from a dataset,
+    online/offline RL is the wrong label.
+11. At minimum: exact robot/task and action/observation contract; data and
+    compute budget; baseline implementations and tuning; seeds/trials and
+    uncertainty; simulator-to-real evidence; runtime latency/model size; safety
+    protocol; and availability/license of code, configs, data, and checkpoints.
+    Any four well-explained items expose why one benchmark mean is insufficient.
 
 </details>

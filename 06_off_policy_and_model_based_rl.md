@@ -7,6 +7,25 @@ model-based methods try to learn more from each interaction.
 
 This chapter explains the motivation and failure modes before the algorithms.
 
+### Two historical routes to transition efficiency
+
+Off-policy value learning descends from Q-learning: learn about one target
+policy while data may come from another. Deep Deterministic Policy Gradient
+(DDPG) extended this route to continuous actions using a learned actor; Twin
+Delayed Deep Deterministic Policy Gradient (TD3) directly addressed its
+overestimation and brittle actor
+updates. Soft Actor-Critic (SAC) added a stochastic maximum-entropy policy and
+became a widely used continuous-control baseline.
+
+Model-based control follows a different route. System identification and Model
+Predictive Control (MPC) plan through known or fitted dynamics. Probabilistic
+Ensembles with Trajectory Sampling (PETS) represented uncertainty; model-based policy
+optimization mixed short model rollouts with real replay; Dreamer learned and
+acted in a recurrent latent world; TD-MPC learned a control-centered latent
+model and planned locally. The 2026 frontier still contains both routes and
+hybrids—no theorem makes replay or imagination universally cheaper than fresh
+parallel simulation.
+
 ## 6.1 Replay buffers: experience as a reusable dataset
 
 An off-policy learner commonly stores transitions
@@ -27,6 +46,18 @@ Replay provides:
 That mixture is also the difficulty. The current actor may visit states and
 actions differently from the buffer. A critic can be asked about actions for
 which the data provides weak evidence.
+
+Two quantities describe the engineering regime:
+
+- **replay ratio** or update-to-data ratio: gradient samples consumed divided
+  by new environment transitions;
+- **buffer age and coverage**: how old and behaviorally diverse sampled data
+  is relative to the current policy.
+
+A ratio of 32 means 32 sampled transition uses per new transition, not
+necessarily 32 unique optimizer steps. Larger ratios can improve reuse until
+the learner overfits a narrow buffer, targets drift, or compute becomes the
+bottleneck. Report both environment steps and gradient updates.
 
 ## 6.2 State-action critics
 
@@ -49,6 +80,28 @@ y=r+\gamma(1-d)\,\text{next-value}.
 The factor $(1-d)$ removes future value after a true terminal transition. A
 time-limit truncation may need different handling because the underlying task
 could have continued. Confusing termination with truncation biases targets.
+
+The squared critic objective over replay distribution $D$ is
+
+```math
+L_Q(\phi)=
+\mathbb{E}_{(s,a,r,s',d)\sim D}
+[(Q_\phi(s,a)-y)^2].
+```
+
+This loss only constrains state-action pairs represented in $D$. An actor can
+query $Q_\phi(s,a)$ at a different action $a=\pi_\theta(s)$, so low replay loss
+does not imply accurate gradients at actor-proposed actions.
+
+Target networks reduce rapid feedback. A **Polyak** or exponential moving
+average update is
+
+```math
+\bar\phi\leftarrow\rho\bar\phi+(1-\rho)\phi,
+```
+
+with $\rho$ close to 1. The target follows slowly rather than being copied on
+every critic step.
 
 ## 6.3 Why critics become overoptimistic
 
@@ -97,6 +150,35 @@ The actor is optimized to choose actions its critic values:
 \max_\theta\ \mathbb{E}_{s\sim D}
 [Q_{\phi_1}(s,\pi_\theta(s))].
 ```
+
+The chain rule gives the deterministic actor gradient:
+
+```math
+\nabla_\theta J
+\approx
+\mathbb{E}_{s\sim D}
+\left[
+\left.\nabla_a Q_\phi(s,a)\right|_{a=\pi_\theta(s)}
+\nabla_\theta\pi_\theta(s)
+\right].
+```
+
+Read it from left to right: the critic says which small action change would
+increase predicted value, then the actor Jacobian says how weights must change
+to produce that action change. This makes critic smoothness and correctness at
+actor actions crucial. A narrow erroneous Q peak can directly pull the actor
+toward it.
+
+Target policy smoothing adds bounded noise to the next action inside the
+target. It approximates valuing a neighborhood:
+
+```math
+\tilde Q(s',a')
+\approx\mathbb{E}_{\epsilon}[Q(s',a'+\epsilon)],
+```
+
+so an isolated critic spike is less attractive. Exploration noise on actions
+collected into replay is a separate mechanism from this target noise.
 
 The [TD3 paper](https://arxiv.org/abs/1802.09477) isolates these mechanisms.
 Its benchmark findings support those mechanisms in the evaluated continuous
@@ -152,6 +234,45 @@ Interpretation: prefer actions the critics value, while paying a cost for
 collapsing the action distribution too sharply. Modern SAC often tunes
 $\alpha$ toward a target entropy instead of fixing it.
 
+### Soft value and temperature, step by step
+
+The maximum-entropy state value is
+
+```math
+V(s)=\mathbb{E}_{a\sim\pi}
+[Q(s,a)-\alpha\log\pi(a\mid s)].
+```
+
+Because entropy is $-\mathbb{E}[\log\pi]$, subtracting
+$\alpha\log\pi$ adds an entropy bonus. Insert this value into the Bellman
+target to obtain the earlier SAC target. The actor loss is the negative of the
+same soft value under reparameterized samples.
+
+Automatic temperature tuning can minimize
+
+```math
+J(\alpha)=
+\mathbb{E}_{a\sim\pi}
+[-\alpha(\log\pi(a\mid s)+\mathcal{H}_{target})].
+```
+
+If entropy is below the chosen target, the update tends to increase $\alpha$
+and put more weight on diversity; if entropy is above target, it reduces that
+pressure. The target entropy is still a design choice, not discovered task
+intent.
+
+The `tanh` action transform requires a probability correction. If
+$a=\tanh(u)$, change of variables gives, componentwise,
+
+```math
+\log\pi_A(a\mid s)=
+\log\pi_U(u\mid s)-\sum_j\log(1-\tanh^2(u_j)).
+```
+
+Omitting the Jacobian term makes the actor optimize the wrong bounded-action
+density, especially near $-1$ and $1$. Mature implementations clamp or
+rearrange this calculation for numerical stability.
+
 The primary [SAC paper](https://arxiv.org/abs/1801.01290) motivated stable,
 sample-efficient continuous control. “Sample efficient” still depends on what
 counts as a sample, update-to-data ratio, environment, and compute.
@@ -190,6 +311,45 @@ Executing only the first action is **receding-horizon control**. Replanning
 limits damage from prediction error because reality corrects the plan at every
 step.
 
+For horizon $H$, a deterministic planner can solve
+
+```math
+\max_{a_{t:t+H-1}}
+\left[
+\sum_{k=0}^{H-1}\gamma^k
+\hat r(\hat s_{t+k},a_{t+k})
++\gamma^H\hat V(\hat s_{t+H})
+\right]
+```
+
+subject to
+
+```math
+\hat s_{t+k+1}=\hat f(\hat s_{t+k},a_{t+k}).
+```
+
+The terminal value $\hat V$ summarizes reward beyond the short planning
+horizon. Without it, a short planner can be myopic; with a bad learned value,
+it can inherit critic error.
+
+The cross-entropy method (CEM) is a gradient-free sequence optimizer:
+
+```text
+initialize a Gaussian over H-step action sequences
+repeat:
+    sample candidate sequences
+    roll each through the model and score it
+    keep the lowest-cost elite fraction
+    refit each time step's mean and standard deviation to elites
+execute only the first mean action; observe reality; replan
+```
+
+Run
+[`examples/cem_mpc_point_mass.py`](examples/cem_mpc_point_mass.py) to see the
+equations control a one-dimensional point mass. It deliberately contains no
+learning: replace its exact `dynamics` with a fitted model and it becomes the
+planning core of a simple model-based learning experiment.
+
 Model-based reinforcement learning (RL) learns some or all of the model and
 uses it to improve behavior.
 
@@ -198,6 +358,25 @@ uses it to improve behavior.
 Let a learned model have a small one-step error. Rolling it forward for 100
 steps feeds predictions back as inputs, so error can compound. The policy or
 planner may also seek regions where the model is wrong in a favorable way.
+
+A simple bound makes the pressure visible. Suppose true dynamics $f$ and
+learned dynamics $\hat f$ differ by at most $\epsilon$ per step, and both are
+$L$-Lipschitz in state. If $e_k=\lVert s_k-\hat s_k\rVert$, then roughly
+
+```math
+e_{k+1}\leq Le_k+\epsilon.
+```
+
+Starting from the same state, unrolling gives
+
+```math
+e_H\leq\epsilon\sum_{i=0}^{H-1}L^i.
+```
+
+For $L=1$, the bound grows as $H\epsilon$; for $L>1$, it can grow
+geometrically. This is a worst-case bound, not a forecast, but it explains why
+longer imagination is not free and why unstable/contact-rich dynamics are
+difficult.
 
 Mitigations include:
 
@@ -232,6 +411,39 @@ The latent state is not guaranteed to correspond to human-named variables. It
 is optimized to support reconstruction, prediction, reward, value, or a
 combination.
 
+A recurrent state-space model separates deterministic memory $h_t$ and a
+stochastic latent $z_t$:
+
+```math
+h_t=f_\psi(h_{t-1},z_{t-1},a_{t-1}),
+```
+
+```math
+z_t\sim q_\psi(z_t\mid h_t,o_t)
+\quad\text{during observation},
+```
+
+```math
+z_t\sim p_\psi(z_t\mid h_t)
+\quad\text{during imagination}.
+```
+
+The posterior $q$ may inspect the real observation; the prior $p$ must predict
+without it. Training balances prediction terms and a Kullback–Leibler (KL)
+divergence that makes prior and posterior compatible:
+
+```math
+L_{model}\approx
+-\log p(o_t\mid h_t,z_t)
+-\log p(r_t\mid h_t,z_t)
+-\log p(c_t\mid h_t,z_t)
++\beta D_{KL}(q(z_t\mid h_t,o_t)\,\|\,p(z_t\mid h_t)).
+```
+
+$c_t$ represents continuation. Exact DreamerV3 losses include additional
+balancing, free-bit, distribution, and normalization details; the equation is
+a reading map, not replacement code.
+
 ## 6.10 DreamerV3
 
 [DreamerV3](https://arxiv.org/abs/2301.04104) learns a world model from replay,
@@ -247,6 +459,12 @@ real/sim experience -> learn predictive latent world
 learned world        -> generate imagined futures
 imagined futures     -> improve policy/value
 ```
+
+During imagination, the actor samples actions from latent states and the
+critic estimates a $\lambda$-return. Gradients can then improve many imagined
+steps per real transition. This sample reuse is valuable only insofar as the
+learned latent dynamics and reward remain decision-correct where the actor
+goes.
 
 Questions to ask before applying it to a robot:
 
@@ -269,9 +487,44 @@ in latent space, uses learned reward and terminal value to score them, and
 executes the first action. The policy helps propose actions and can also serve
 as a fast behavior prior.
 
+TD-MPC2 trains a representation so that predicted next latent, reward, and
+value agree with replay-derived targets. A schematic joint loss is
+
+```math
+L=
+c_z\lVert\hat z_{t+1}-\mathrm{stopgrad}(z_{t+1})\rVert^2
++c_r\ell(\hat r_t,r_t)
++c_q\ell(\hat Q_t,y_t)
++c_\pi L_{policy}.
+```
+
+`stopgrad` means the target representation is treated as a constant on that
+loss branch. The actual method uses distributional/value-normalization and
+planning details documented by its paper and
+[official implementation](https://github.com/nicklashansen/tdmpc2). The mapping
+to look for is: encoder, latent dynamics, reward/value heads, policy prior,
+replay update, and trajectory optimizer.
+
 This offers a different runtime tradeoff from a small feed-forward PPO actor:
 planning may improve data efficiency or adaptation but consumes more per-step
 compute and introduces planner/model failure modes.
+
+### Model-based alternatives through 2026
+
+- **PETS** uses probabilistic ensembles and trajectory sampling to represent
+  epistemic uncertainty, then plans without learning a separate actor.
+- **Model-Based Policy Optimization (MBPO)** adds short learned-model rollouts
+  to real replay, deliberately limiting horizon to control model bias.
+- **DreamerV3** learns a generative recurrent latent world and amortized actor;
+  it is attractive when observations are rich and online samples are scarce.
+- **TD-MPC2** learns control-centered latents and retains decision-time
+  planning; it trades actor simplicity for planner compute.
+- **Known-physics MPC plus learned residual** preserves explicit constraints
+  and asks learning to model only what nominal dynamics miss.
+
+These methods answer different questions. Compare realized task success per
+real transition, total compute, planning deadline misses, model calibration,
+reset burden, and failure severity—not only a benchmark mean.
 
 ## 6.12 Known physics, learned residuals, and hybrid control
 
@@ -325,6 +578,20 @@ Changing algorithm and reward together answers no clean question.
    loop. What must be measured?
 7. Design a bounded residual action for a wheeled-leg robot with a classical
    balance controller.
+8. A learner performs 64 gradient sample uses for each new environment
+   transition. What is its update-to-data ratio? Name two reasons increasing it
+   further can hurt even though no new robot wear is incurred.
+9. With current critic parameter 10, target parameter 4, and Polyak
+   $\rho=0.995$, compute the new target parameter.
+10. Use the deterministic policy-gradient equation to explain how a false
+    local Q peak can move an actor even if that action never appears in replay.
+11. In SAC, why must a `tanh`-squashed Gaussian subtract a log-Jacobian term?
+12. For model one-step error $\epsilon=0.01$, Lipschitz factor $L=1.2$, and
+    horizon 3, evaluate the derived upper bound on state error.
+13. Explain why CEM executes only the first planned action. What information is
+    thrown away and why can discarding it be beneficial?
+14. Compare PETS, DreamerV3, TD-MPC2, and known-physics MPC along: learned
+    representation, decision-time planning, actor, and uncertainty/model risk.
 
 Continue with [robot dynamics, control, and estimation](07_robotics_control_and_estimation.md).
 
@@ -367,5 +634,48 @@ Continue with [robot dynamics, control, and estimation](07_robotics_control_and_
    Expire the residual on stale input or deadline miss, rate-limit the combined
    target, preserve microcontroller unit (MCU) current/speed/tilt limits, and
    prove that residual zero returns to the accepted baseline.
+8. The ratio is 64 sampled transition uses per new transition. More reuse can
+   overfit recent/narrow coverage, amplify bootstrapped critic error, make
+   targets chase a fast learner, bias training toward stale behavior, or make
+   optimizer compute dominate wall time. Robot wear is only one resource.
+9. Polyak averaging gives
+
+   ```math
+   \bar\phi_{new}=0.995(4)+0.005(10)=3.98+0.05=4.03.
+   ```
+
+   The target moves only 0.03 toward the current critic.
+10. The actor queries $\nabla_aQ(s,a)$ specifically at
+    $a=\pi_\theta(s)$, not only at replay actions. If approximation creates a
+    false rising slope/peak there, the chain rule turns that slope into an actor
+    parameter update toward the unsupported action. Low error on stored actions
+    does not constrain every queried gradient.
+11. Probability density changes under a nonlinear coordinate transform. `tanh`
+    compresses an unbounded interval near action limits, so equal intervals in
+    pre-squash $u$ do not map to equal intervals in $a$. The Jacobian correction
+    accounts for that volume change; without it, entropy and actor objectives
+    describe the wrong action density.
+12. The bound is
+
+    ```math
+    e_3\leq0.01(1+1.2+1.2^2)=0.01(3.64)=0.0364.
+    ```
+
+    It is a worst-case norm bound under the stated uniform/Lipschitz assumptions,
+    not an expected empirical error.
+13. After one action, the system obtains a new real observation. Replanning
+    replaces predicted state with measured/estimated state and can adapt to
+    disturbances/model error. The remaining $H-1$ candidate actions are
+    discarded (or sometimes warm-start the next distribution); blindly
+    executing them open-loop would accumulate prediction error.
+14. PETS learns a probabilistic ensemble and plans at every decision without a
+    required actor; ensemble disagreement exposes one kind of model uncertainty.
+    DreamerV3 learns a recurrent stochastic latent world plus actor/critic and
+    normally deploys the amortized actor; imagination error affects training.
+    TD-MPC2 learns a control-centered latent, policy/value, and dynamics and
+    retains online trajectory optimization. Known-physics MPC may fit only
+    parameters/residuals, plans online, and can express constraints, but wrong
+    nominal physics and state estimates remain risks. Runtime and data costs
+    differ, so the comparison is conditional.
 
 </details>

@@ -1,7 +1,8 @@
 title: "Robot Reinforcement Learning"
 subtitle: "From First Principles to Real Robots"
 author: "Bruce Lu"
-date: "2026-08-31"
+date: "2026-09-01"
+version: "1.0.0"
 lang: en-US
 documentclass: book
 classoption:

@@ -8,6 +8,19 @@ an equation asks the computer to do.
 This chapter builds that minimum toolkit. Keep a pencil nearby: predicting a
 number before running code is much more educational than only reading it.
 
+### Where this toolkit came from
+
+Deep reinforcement learning (RL) did not invent its mathematics. Bellman's dynamic programming uses
+probability and recursive value equations; Robbins and Monro's 1951 stochastic
+approximation explains learning from noisy samples; likelihood-ratio estimators
+make policy gradients possible; and reverse-mode automatic differentiation
+turns the chain rule into practical neural-network training. Modern libraries
+compose these ideas at tensor scale.
+
+The goal of this chapter is therefore not to survey all of calculus or linear
+algebra. It is to build a trace from every symbol used later to an operation a
+program performs, including its shape, units, estimate error, and failure mode.
+
 ## 2.1 Scalars, vectors, matrices, and tensors
 
 A **scalar** is one number, such as the reward at one instant:
@@ -69,6 +82,41 @@ joint position delta:  shape (14,), unit rad, relative to HOME
 This discipline matters because a numerically valid 61-vector with the wrong
 units or frame still produces a physically wrong action.
 
+### Dot products, norms, and batches
+
+The **dot product** combines two equal-length vectors into one scalar:
+
+```math
+x^Ty=\sum_{i=1}^{n}x_i y_i.
+```
+
+It appears in every neural layer and many robot costs. If
+$x=[1,2,-1]$ and $y=[3,0,4]$, then $x^Ty=3+0-4=-1$.
+
+The Euclidean norm measures vector magnitude:
+
+```math
+\lVert x\rVert_2=\sqrt{x^Tx}
+=\sqrt{\sum_i x_i^2}.
+```
+
+A squared tracking error $\lVert v-v^*\rVert_2^2$ therefore means “square each
+component error and add.” It grows quadratically and makes one large miss more
+expensive than several small ones with the same absolute sum. The $L_1$ norm,
+$\lVert x\rVert_1=\sum_i|x_i|$, grows linearly and has a corner at zero. Which
+one is used changes both optimization gradients and outlier sensitivity.
+
+For a batch matrix $X\in\mathbb{R}^{B\times61}$ and a layer stored as
+$W\in\mathbb{R}^{512\times61}$, frameworks commonly evaluate
+
+```math
+Z=XW^T+\mathbf{1}b^T,
+```
+
+so $Z\in\mathbb{R}^{B\times512}$. The bias is **broadcast**—logically copied
+across the $B$ rows. A layer with 61 inputs and 512 outputs has
+$61\times512+512=31{,}744$ learned scalar parameters.
+
 ## 2.2 Functions and parameters
 
 A **function** maps an input to an output. A policy is a function:
@@ -129,6 +177,24 @@ vertical bar means “conditioned on.” A policy must respond differently to a
 tilting-left observation and a tilting-right observation, so it represents a
 conditional distribution rather than one fixed action distribution.
 
+Joint and conditional probability are related by the product rule:
+
+```math
+p(x,y)=p(x\mid y)p(y)=p(y\mid x)p(x).
+```
+
+Rearranging gives Bayes' rule:
+
+```math
+p(x\mid y)=\frac{p(y\mid x)p(x)}{p(y)}.
+```
+
+In state estimation, $p(x)$ is a prior belief about robot state, $p(y\mid x)$
+is a sensor likelihood, and $p(x\mid y)$ is the posterior after observing the
+measurement. A learned recurrent actor need not explicitly calculate this
+fraction, but its history-processing role is related: infer hidden conditions
+from their observable effects.
+
 ### Expectation
 
 The **expectation** $\mathbb{E}[X]$ is a probability-weighted average. For a
@@ -154,6 +220,48 @@ Variance measures spread around the mean:
 Two policies can have the same mean return while one fails violently in 10% of
 trials. Reporting only the mean hides that distinction.
 
+For a finite distribution with outcomes $x_i$ and probabilities $p_i$:
+
+```math
+\mu=\sum_i p_i x_i,
+\qquad
+\mathrm{Var}(X)=\sum_i p_i(x_i-\mu)^2.
+```
+
+Standard deviation is $\sigma=\sqrt{\mathrm{Var}(X)}$ and has the original
+unit. Variance of an angle measured in radians has units radian squared;
+standard deviation is again in radians.
+
+Two variables can vary together. Their covariance is
+
+```math
+\mathrm{Cov}(X,Y)=
+\mathbb{E}[(X-\mathbb{E}[X])(Y-\mathbb{E}[Y])].
+```
+
+A diagonal Gaussian policy assumes action noise has zero cross-joint
+covariance after conditioning on the observation. The neural mean can still
+coordinate joints; the simplifying assumption concerns sampled residual noise.
+Full-covariance policies can represent correlated exploration but require more
+parameters and stable matrix operations.
+
+### From population expectation to a sample estimate
+
+The objective contains expectations over distributions we cannot enumerate.
+With $N$ sampled values $x_1,\ldots,x_N$, the Monte Carlo estimate is
+
+```math
+\hat\mu=\frac{1}{N}\sum_{i=1}^{N}x_i.
+```
+
+If samples are independent with variance $\sigma^2$, then
+$\mathrm{Var}(\hat\mu)=\sigma^2/N$ and the standard error scales as
+$1/\sqrt{N}$. Four times as many independent samples roughly halves this
+sampling uncertainty, not quarters it. Robot trajectory samples are correlated
+within episodes, so treating every time step as independent can greatly
+overstate confidence; evaluation usually aggregates by seed, episode, or
+hardware trial.
+
 ## 2.4 Why logarithms appear in policy gradients
 
 For independent events, probabilities multiply. Products of many numbers
@@ -176,6 +284,44 @@ You do not need to memorize the fraction yet. The practical idea is that the
 gradient can adjust the probability of actions that were actually sampled.
 Positive advantage pushes their log-probability up; negative advantage pushes
 it down.
+
+For one scalar Gaussian action, the density is
+
+```math
+\pi(a\mid o)=
+\frac{1}{\sigma\sqrt{2\pi}}
+\exp\left[-\frac{(a-\mu)^2}{2\sigma^2}\right].
+```
+
+Taking its logarithm turns multiplication into addition:
+
+```math
+\log\pi(a\mid o)=
+-\frac{1}{2}
+\left[
+\frac{(a-\mu)^2}{\sigma^2}
++2\log\sigma+\log(2\pi)
+\right].
+```
+
+Differentiate with respect to the mean:
+
+```math
+\frac{\partial}{\partial\mu}\log\pi(a\mid o)
+=\frac{a-\mu}{\sigma^2}.
+```
+
+If the sampled action is above the mean, increasing the mean makes it more
+likely; if it is below, the gradient points downward. Smaller $\sigma$ makes
+the same deviation more surprising and produces a larger score magnitude.
+This local derivative is the concrete mechanism behind “increase the
+probability of an advantageous action.”
+
+For an independent $d$-dimensional diagonal Gaussian, implementations sum one
+such log-probability per action dimension. Run
+[`examples/gaussian_policy_math.py`](examples/gaussian_policy_math.py) to
+compare the analytic derivative with a finite difference and to calculate
+Gaussian entropy.
 
 ## 2.5 Derivatives: sensitivity to change
 
@@ -225,6 +371,19 @@ $L(\theta)$, gradient descent takes a small step in the opposite direction:
 ```
 
 where $\alpha$ is the **learning rate**, the step-size hyperparameter.
+
+When both input and output are vectors, derivatives form a **Jacobian**. For
+$f:\mathbb{R}^n\rightarrow\mathbb{R}^m$:
+
+```math
+J_{ij}=\frac{\partial f_i}{\partial x_j},
+\qquad J\in\mathbb{R}^{m\times n}.
+```
+
+Robot kinematics uses a Jacobian to map joint velocity to end-effector
+velocity. Neural-network backpropagation also multiplies Jacobian-vector
+products, but automatic differentiation avoids materializing every huge
+matrix.
 
 ### Numerical example
 
@@ -327,6 +486,35 @@ Optimizers such as Adam maintain moving estimates of gradient scale. Adam can
 make training easier, but it does not repair a wrong reward, missing
 observation, impossible target, or simulator error.
 
+### Why a sampled gradient can still be useful
+
+Let $g_i$ be a gradient contribution from sample $i$. A minibatch estimator is
+
+```math
+\hat g=\frac{1}{B}\sum_{i=1}^{B}g_i.
+```
+
+If the sampling procedure matches the objective, $\mathbb{E}[\hat g]$ can
+equal the desired gradient even though any one minibatch is noisy. Stochastic
+gradient descent follows these noisy directions repeatedly. In RL, the match
+is delicate: trajectories come from a policy, adjacent steps are correlated,
+and reusing old data changes the distribution. Algorithm design is partly the
+art of constructing a gradient estimator whose bias and variance remain
+manageable.
+
+### Gradient clipping and parameter update are not action clipping
+
+Global gradient-norm clipping rescales a parameter gradient when
+$\lVert g\rVert_2$ exceeds threshold $c$:
+
+```math
+g_{used}=g\min\left(1,\frac{c}{\lVert g\rVert_2}\right).
+```
+
+This limits an optimizer step caused by an unusually large batch. It does not
+bound the robot action, motor current, or next network output. Action bounds,
+target rate limits, and hardware supervisors are separate layers.
+
 ## 2.10 Normalization and numerical scale
 
 Suppose one observation ranges around 0.01 and another around 1000. The same
@@ -348,6 +536,31 @@ mathematical optimal policy unchanged in an ideal tabular setting, but it
 changes gradient magnitude, value targets, clipping interactions, and numerical
 behavior in a practical deep-RL implementation.
 
+### Numerical stability is part of the algorithm
+
+Mathematically equivalent expressions need not behave equally in finite
+precision. For example, directly computing $\log(e^{x_1}+e^{x_2})$ can
+overflow for large $x_i$. The stable log-sum-exp identity subtracts the
+maximum $m$:
+
+```math
+\log\sum_i e^{x_i}
+=m+\log\sum_i e^{x_i-m},
+\qquad m=\max_i x_i.
+```
+
+Likewise, policy code stores `log_std`, adds epsilon before square roots, and
+often computes probability ratios from differences of log-probabilities:
+
+```math
+\frac{\pi_{new}(a\mid s)}{\pi_{old}(a\mid s)}
+=\exp[\log\pi_{new}(a\mid s)-\log\pi_{old}(a\mid s)].
+```
+
+These are not cosmetic implementation tricks. A not-a-number (NaN) value in
+one parallel environment can contaminate normalization statistics and then an
+entire policy update.
+
 ## 2.11 Bias and variance: a recurring tradeoff
 
 An estimator has **bias** when its average estimate is systematically shifted.
@@ -363,6 +576,23 @@ It has **variance** when estimates fluctuate strongly across samples.
 “Unbiased” does not automatically mean “better.” A very noisy gradient may
 need so much data that a slightly biased, lower-variance estimator learns more
 reliably.
+
+### Approximation, estimation, and optimization error
+
+When a learned policy fails, separate three sources:
+
+1. **approximation error**: the chosen network/function family cannot
+   represent the needed mapping;
+2. **estimation error**: finite, noisy, or poorly covered data cannot identify
+   the best representable mapping; and
+3. **optimization error**: the optimizer did not find good parameters even for
+   the available data and model class.
+
+Adding a larger network targets approximation error but can worsen estimation
+or optimization. Collecting diverse resets targets coverage, not network
+capacity. Lowering a learning rate targets optimization dynamics, not a missing
+camera input. This decomposition prevents “tune the neural network” from
+becoming a universal but untestable explanation.
 
 ## 2.12 A tiny gradient check
 
@@ -398,6 +628,24 @@ operation.
    training used radians?
 6. Explain backpropagation without using the phrase “the computer learns.”
 7. Why does an observation normalizer belong in the deployment contract?
+8. A linear layer maps 61 inputs to 512 outputs. Derive its parameter count,
+   including bias. What is the output batch shape for 4,096 observations?
+9. Compute the dot product and Euclidean norm of $x=[3,4]$. Give one robot
+   interpretation of each.
+10. A return distribution is $0$ with probability 0.1 and $10$ with
+    probability 0.9. Compute its expectation, variance, and standard deviation.
+    Why does the expectation alone hide an important fact?
+11. For a scalar Gaussian with $\mu=0$, $\sigma=0.5$, and sampled action
+    $a=0.25$, compute $\partial\log\pi/\partial\mu$. If advantage is positive,
+    which way will a policy-gradient update tend to move $\mu$?
+12. Assuming independent samples, by what factor must the sample count grow to
+    reduce standard error by a factor of three? Why may robot time steps not
+    satisfy the independence assumption?
+13. A gradient is $g=[6,8]$ and global norm threshold is 5. Compute the clipped
+    gradient. Does this bound the motor command?
+14. Classify each proposed fix by its primary target: add history for hidden
+    backlash; collect more rough-terrain resets; widen a network that cannot
+    represent a discontinuous gate; lower a diverging optimizer step.
 
 The small bandit example in
 [`examples/bandit_incremental_mean.py`](examples/bandit_incremental_mean.py)
@@ -449,5 +697,37 @@ Run it before continuing with
    numbers. Mean, variance, clipping, epsilon, order, and units therefore form
    part of the deployed function and must travel with or be embedded in the
    exported model.
+8. There are $61\times512=31{,}232$ weights and 512 biases, for 31,744
+   parameters. A batch $X\in\mathbb{R}^{4096\times61}$ produces
+   $Z\in\mathbb{R}^{4096\times512}$.
+9. The dot product with itself is $x^Tx=3^2+4^2=25$; the norm is
+   $\sqrt{25}=5$. A dot product between unit body-up and world-up measures
+   orientation alignment. A norm can measure the magnitude of a velocity or
+   tracking-error vector.
+10. The mean is $0.1(0)+0.9(10)=9$. The variance is
+
+    ```math
+    0.1(0-9)^2+0.9(10-9)^2=8.1+0.9=9,
+    ```
+
+    so the standard deviation is 3. The mean of 9 conceals a 10% complete-
+    failure rate, which could be unacceptable on hardware.
+11. The score is $(a-\mu)/\sigma^2=0.25/0.25=1$. With positive advantage,
+    gradient ascent tends to increase the action's log-probability, moving the
+    mean upward toward the sampled value (subject to other samples/loss terms).
+12. Standard error scales as $1/\sqrt{N}$. Reducing it by three requires
+    $3^2=9$ times as many independent samples. Consecutive robot steps share
+    state, command, terrain, and episode conditions, so they are correlated;
+    the effective independent sample count is smaller than the transition
+    count.
+13. The original norm is $\sqrt{6^2+8^2}=10$. Scale by $5/10$ to obtain
+    $g_{used}=[3,4]$. This bounds the parameter-update gradient norm only. Motor
+    commands require their own action transform, range/rate limits, and safety
+    checks.
+14. History primarily targets partial observability/representation;
+    rough-terrain resets target estimation coverage; widening the network
+    targets approximation capacity; lowering the step targets optimization
+    stability. Each diagnosis should still be tested because the categories
+    can interact.
 
 </details>

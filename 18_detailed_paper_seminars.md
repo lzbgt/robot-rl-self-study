@@ -771,6 +771,78 @@ an older observation. Measure
 
 Smooth throughput is not enough if stale actions meet a disturbed robot.
 
+### Frequency-space Action Sequence Tokenization (FAST): action encoding matters
+
+- [FAST: Efficient Action Tokenization for Vision-Language-Action Models
+  (2025)](https://arxiv.org/abs/2501.09747)
+- [Official `openpi` implementation](https://github.com/Physical-Intelligence/openpi)
+
+Frequency-space Action Sequence Tokenization (FAST) asks why an autoregressive
+model should emit one quantized symbol for every action dimension at every
+timestep. Robot trajectories are temporally correlated. Apply a discrete cosine
+transform to an action chunk, order/quantize its frequency coefficients, then
+compress the resulting integer sequence. Smooth motion often needs only a few
+large low-frequency coefficients.
+
+If $A\in\mathbb R^{H\times d_a}$ is a chunk and
+$C\in\mathbb R^{H\times H}$
+is a cosine-transform matrix, then
+
+```math
+F=CA
+```
+
+contains temporal-frequency coefficients for every action dimension. Keeping
+or coding coefficients efficiently is a trajectory representation; it is not
+an assumption that high-frequency corrections never matter. Reconstruction
+error must be measured against task success, contacts, and actuator bandwidth.
+
+The paper reports that naïve per-dimension/time binning performs poorly on its
+high-frequency dexterous tasks, while FAST enables efficient autoregressive
+training. FAST+ is trained as a reusable tokenizer over a large robot-data
+mixture. For a new embodiment, audit normalization, action rate, reconstruction
+error by joint, and whether safety-critical short impulses are compressed away.
+
+### OpenVLA-OFT: adaptation recipe can dominate the backbone
+
+- [Fine-Tuning Vision-Language-Action Models: Optimizing Speed and Success
+  (2025)](https://arxiv.org/abs/2502.19645)
+- [Official OpenVLA-OFT code](https://github.com/moojink/openvla-oft)
+
+Optimized Fine-Tuning (OFT) replaces slow autoregressive per-action-token
+decoding with parallel continuous action chunks and a simple absolute-error
+objective. The paper reports a large throughput and success improvement over
+its OpenVLA baseline on the evaluated LIBERO and real-robot protocols.
+
+The causal lesson is more important than the headline number. A VLA comparison
+changes at least four axes:
+
+```text
+backbone representation
+action target (tokens or continuous)
+temporal output (one action or chunk)
+decoder schedule (autoregressive or parallel)
+adaptation scope and loss
+```
+
+An ablation must separate them. If a continuous chunk head wins, that is not
+automatically evidence that a larger vision-language backbone caused the gain.
+
+### A current frontier needs dated evidence
+
+The 2025 [Gemini Robotics report](https://arxiv.org/abs/2503.20020) studies a
+closed generalist VLA plus an embodied-reasoning model, including semantic,
+spatial, and cross-embodiment evaluations. It is scientifically relevant but
+not reproducible from open weights and training code. The 2026
+[Green-VLA preprint](https://arxiv.org/abs/2602.00919) proposes staged
+grounding, multi-embodiment pretraining, embodiment adaptation, and RL
+alignment. Because it is a recent preprint, treat its reported results as
+provisional until independently reproduced.
+
+These examples prevent two opposite mistakes: ignoring closed work entirely,
+or treating an inaccessible reported result as a deployable open-source option.
+Record evidence and artifact openness on separate axes.
+
 ### Comparing VLAs responsibly
 
 Record:
@@ -996,7 +1068,313 @@ Do not report only obstacle success. Label:
 This ladder determines whether failure belongs to perception, planning, command
 tracking, or joint-level control.
 
-## 18.11 Synthesis: five enduring research themes
+## 18.11 Seminar 11 — From motion imitation to general whole-body control
+
+### Primary works and open artifacts
+
+- [DeepMimic: Example-Guided Deep Reinforcement Learning of Physics-Based
+  Character Skills (2018)](https://arxiv.org/abs/1804.02717)
+- [Adversarial Motion Priors (AMP, 2021)](https://arxiv.org/abs/2104.02180)
+- [Adversarial Skill Embeddings (ASE, 2022)](https://arxiv.org/abs/2205.01906)
+  and [official code](https://github.com/nv-tlabs/ASE)
+- [MaskedMimic (2024)](https://arxiv.org/abs/2409.14393) and
+  [official ProtoMotions code](https://github.com/NVlabs/ProtoMotions)
+- [ASAP: Aligning Simulation and Real-World Physics for Learning Agile
+  Humanoid Whole-Body Skills (2025)](https://arxiv.org/abs/2502.01143) and
+  [official code](https://github.com/LeCAR-Lab/ASAP)
+- [BeyondMimic (2025)](https://arxiv.org/abs/2508.08241) and
+  [official tracking code](https://github.com/HybridRobotics/whole_body_tracking)
+
+These works form a lineage, not a single benchmark ranking. DeepMimic asks how
+to track reference motion under physics. AMP replaces hand-written reference
+terms with a learned motion prior. ASE learns reusable latent skills.
+MaskedMimic treats diverse control signals as masked motion completion. ASAP
+targets real/simulation dynamics alignment, and BeyondMimic combines strong
+tracking with guided generative composition.
+
+### DeepMimic: reference motion becomes a task
+
+A motion-capture clip supplies reference pose and velocity at phase
+$\phi_t\in[0,1)$. The policy observes robot state and phase, then produces joint
+targets. A representative tracking reward combines exponential similarities:
+
+```math
+r_t=w_q\exp\left(-k_q\|q_t-\hat q(\phi_t)\|^2\right)
+   +w_v\exp\left(-k_v\|\dot q_t-\hat{\dot q}(\phi_t)\|^2\right)
+   +w_e\exp\left(-k_e\sum_j
+     \|p_t^j-\hat p^j(\phi_t)\|^2\right).
+```
+
+The hats are reference quantities and the end-effector index is $j$. The
+exponential gives a bounded smooth score: near the reference, small errors
+matter; far away, the term can saturate with almost no gradient. The weights
+and scales decide whether root balance, feet, or joint style dominate.
+
+Early termination after an unrecoverable fall prevents the learner from
+spending most data far from the motion manifold. Reference-state initialization
+samples phases throughout the clip so training reaches every part rather than
+waiting for a novice policy to survive from frame zero.
+
+The major limitation is specification: a phase-indexed tracker knows *which
+motion and time* to imitate. It is not yet a general skill selector.
+
+### Retargeting is an optimization problem
+
+Human and robot skeletons have different limbs, limits, feet, and mass. One
+retargeting objective is
+
+```math
+q^*(t)=\arg\min_q
+\sum_j w_j\|p_j(q)-\tilde p_j(t)\|^2
++\lambda\|q-q_{\mathrm{rest}}\|^2,
+```
+
+subject to joint limits and contact constraints. Here $\tilde p_j$ is a scaled
+human target and $p_j(q)$ is robot forward kinematics. A low kinematic error
+does not imply dynamic feasibility. A pose can require impossible torque,
+self-collide, or move the center of pressure beyond support.
+
+Always visualize retargeted clips, compute limit/contact/velocity violations,
+and identify which reference channels are physically meaningful before RL.
+
+### AMP and ASE: learn a motion manifold
+
+Adversarial Motion Priors (AMP) trains a discriminator to distinguish short
+state transitions from reference motion and policy motion. A simplified
+discriminator objective is
+
+```math
+\max_D\quad
+\mathbb E_{x\sim p_{\mathrm{ref}}}[\log D(x)]
++\mathbb E_{x\sim p_\pi}[\log(1-D(x))].
+```
+
+The policy receives a style reward derived from confusing the discriminator,
+plus a task reward such as target speed. The discriminator learns what
+transitions look motion-like without a phase-aligned target at every step.
+
+This removes much manual reward engineering but creates new failure modes:
+discriminator overfitting, reward nonstationarity, missing rare motions, and a
+policy that is stylistically plausible yet completes the task poorly. The
+reference dataset is now part of the reward definition.
+
+Adversarial Skill Embeddings (ASE) conditions behavior on latent $z$ and adds an
+information objective so motion makes $z$ recoverable. Conceptually,
+
+```math
+\max_{\pi,q}\quad
+\mathbb E[\log q(z\mid s_t,s_{t+1})]
++\lambda\,J_{\mathrm{style}}.
+```
+
+The latent becomes a reusable skill coordinate. A downstream task can select
+or adapt latents more cheaply than relearning low-level motion. Inspect whether
+different latents are genuinely controllable and useful, not merely separated
+in a visualization.
+
+### MaskedMimic: control as conditional inpainting
+
+MaskedMimic randomly hides parts of motion information during training. The
+controller may receive sparse future poses, a trajectory, selected body targets,
+or text-derived motion constraints and must fill in a physically plausible
+whole-body behavior.
+
+Let full motion condition be $c$ and binary mask $m$. Training samples
+
+```math
+\tilde c=m\odot c+(1-m)\odot c_{\mathrm{mask}},
+```
+
+then learns a controller consistent with visible constraints. Random masking
+unifies several interfaces: no mask is full tracking; sparse masks are partial
+control. The scientific question is whether the training mask distribution
+covers the combinations requested at deployment.
+
+The official ProtoMotions model cards preserve resolved configuration,
+normalization, and mask layout—details without which a checkpoint name is not
+an executable control contract.
+
+### ASAP and BeyondMimic: crossing the hardware boundary
+
+ASAP collects real/simulation paired behavior, learns a delta-action dynamics
+correction, and fine-tunes the tracker in the aligned simulation. The key
+concept is residual system identification: instead of asking broad randomization
+to cover every mismatch equally, learn structure from measured residuals.
+
+Audit excitation coverage. A correction learned from gentle walking may not
+predict a landing impact. The aligned simulator is still a model with a
+validated region, not “the real world in software.”
+
+BeyondMimic builds a robust high-quality motion-tracking layer and distills
+motion primitives into a diffusion controller that can be guided at test time
+by task costs such as waypoints or obstacle penalties. In a schematic guidance
+step,
+
+```math
+x_{k-1}=f_\theta(x_k,c,k)-\lambda_k\nabla_{x_k}C(x_k),
+```
+
+where $f_\theta$ is the learned generative update and $C$ is a differentiable
+task cost. Guidance composes behavior without retraining for every objective,
+but its cost and gradient do not guarantee contact feasibility or safety.
+
+The paper reports impressive real humanoid motions and downstream behaviors in
+its setup. Some evaluations use motion capture for state/scene information;
+record that dependency before calling the result onboard-autonomous perception.
+
+### What this lineage teaches Microduck and JumpRover
+
+Microduck's velocity policy does not become a general motion policy by adding a
+reference clip. A disciplined extension would:
+
+1. retarget one feasible pose/motion and validate support, limits, and torque;
+2. train a phase-conditioned tracking baseline;
+3. compare exact tracking with an adversarial prior only after the baseline;
+4. test reference starts, recovery, and held-out timing;
+5. export through the same 61D observation contract only if command semantics
+   can remain compatible; and
+6. label motions unavailable on the physical robot.
+
+JumpRover should wait for accepted mechanics before dynamics-sensitive
+retargeting. Its useful work now is motion schema, frame conventions, offline
+retargeting visualization, and safety/authority contracts.
+
+### Reproduction exercise
+
+Use one official simulated humanoid or a simplified articulated model. Compare
+joint-only tracking with joint plus end-effector tracking under the same phase
+initialization. Report tracking terms, falls, torque, contact error, and held-out
+motion speed. Then remove phase or mask half the reference to observe which
+information the controller actually requires.
+
+## 18.12 Seminar 12 — Fast off-policy learning in parallel simulation
+
+### Primary works and artifacts
+
+- [FastTD3: Simple, Fast, and Capable Reinforcement Learning for Humanoid
+  Control (2025)](https://arxiv.org/abs/2505.22642)
+- [Official FastTD3 code](https://github.com/younggyoseo/FastTD3)
+- [Learning Sim-to-Real Humanoid Locomotion in 15 Minutes
+  (2025)](https://arxiv.org/abs/2512.01996)
+- [Official Holosoma code](https://github.com/amazon-far/holosoma)
+
+Massively parallel robot learning became closely associated with on-policy PPO,
+because thousands of simulators make fresh batches cheap. These works revisit
+whether replay-based off-policy methods can also exploit that throughput.
+
+### The parent algorithms
+
+Twin Delayed Deep Deterministic Policy Gradient (TD3) uses two critics and a
+deterministic actor. A simplified target is
+
+```math
+y=r+\gamma(1-d)
+\min_{i\in\{1,2\}}
+Q_{\bar\phi_i}\left(s',
+\pi_{\bar\theta}(s')+\epsilon\right),
+```
+
+where target noise $\epsilon$ is clipped, $d$ marks true termination, and bars
+denote target networks. Taking the smaller critic reduces positive value bias;
+delaying actor updates lets critics improve before the actor exploits them.
+
+Soft Actor-Critic (SAC) instead trains a stochastic maximum-entropy policy. Its
+critic target includes entropy:
+
+```math
+y=r+\gamma(1-d)
+\left[
+\min_i Q_{\bar\phi_i}(s',a')
+-\alpha\log\pi_\theta(a'\mid s')
+\right].
+```
+
+The actor minimizes
+
+```math
+J_\pi=\mathbb E
+\left[\alpha\log\pi_\theta(a\mid s)
+-\min_iQ_{\phi_i}(s,a)\right].
+```
+
+Temperature $\alpha$ prices entropy. More entropy encourages diverse action
+sampling, which may help exploration under broad domain randomization but can
+also inject motion the hardware should never see; deployment normally uses a
+deterministic statistic of the policy.
+
+### Why parallel off-policy learning is not automatic
+
+Let $N_{\mathrm{new}}$ new transitions enter replay per collection cycle, and
+let $G$ gradient steps each consume batch size $B$. Define update-to-data reuse
+
+```math
+U=\frac{GB}{N_{\mathrm{new}}}.
+```
+
+Very low $U$ leaves the learner behind a flood of experience. Very high $U$
+can overfit replay errors, amplify critic bias, and spend more compute than a
+fresh on-policy update. Thousands of parallel environments also make adjacent
+collection batches highly synchronized. Replay capacity, warm-up, sampling,
+target updates, batch size, and network throughput must be designed together.
+
+### FastTD3 and FastSAC recipes
+
+FastTD3 combines large-scale parallel simulation, large-batch updates, a
+distributional critic, clipped double-Q logic, and tuned optimization choices.
+A distributional critic predicts a return distribution or quantiles rather
+than one mean, providing a richer learning target. That does not automatically
+make behavior risk-sensitive; the actor's reduction of that distribution still
+defines its objective.
+
+The FastTD3 paper reports solving high-dimensional HumanoidBench and other
+continuous-control tasks with competitive wall-clock time in its protocols.
+The later FastSAC/FastTD3 sim-to-real recipe reports training locomotion on a
+single RTX 4090 in 15 minutes and deployment on Unitree G1 and Booster T1, with
+domain randomization, terrain, pushes, and action-rate curriculum.
+
+Those are end-to-end recipe claims. “Off-policy is faster than PPO” would be too
+broad: reward scale, simulator, batch/update geometry, networks, tuning, and
+hardware are all part of the result.
+
+### A 2026 signal, not a settled replacement
+
+The June 2026 [FastDSAC preprint](https://arxiv.org/abs/2606.31691) and its
+[official code](https://github.com/luge66/FastDSAC) study
+distributional SAC with constrained exploration and policy plasticity for
+scalable humanoid locomotion. It is relevant to the failure mode where early
+data and value estimates trap a policy, but at this book's review date it is a
+recent preprint. Reproduce its baseline protocol before treating the added
+components as generally necessary.
+
+### A fair Microduck experiment
+
+Microduck currently has a proven PPO path, so preserve it as baseline. Before a
+long off-policy run:
+
+1. implement the same 61D observation, 14D action, reward, resets, and actuator;
+2. smoke-test not-a-number values, replay insertion, terminal masks, and export;
+3. report both environment steps and $U$, critic/actor updates, wall time, and
+   peak memory;
+4. match evaluation checkpoints by environment interaction, then separately by
+   wall time;
+5. inspect critic values, target scale, replay age, action saturation, and
+   penalty signs; and
+6. use multiple seeds and the same held-out physics/commands.
+
+If the off-policy method reaches the same return sooner but misses the 50 Hz
+inference contract or produces unsafe action chatter, it is not a deployment
+win. If it fails, distinguish algorithm mechanics from an implementation port
+that did not receive comparable tuning.
+
+### Reproduction exercise
+
+On a supported official benchmark, compare PPO and FastTD3 or FastSAC at fixed
+environment steps and fixed wall time. Report return/success intervals,
+interactions, update ratio, replay size/age, gradient updates, memory, training
+throughput, and policy inference time. Ablate one advertised recipe component;
+do not compare only package defaults.
+
+## 18.13 Synthesis: seven enduring research themes
 
 Across these papers, the durable ideas are:
 
@@ -1010,7 +1388,13 @@ Across these papers, the durable ideas are:
    and predictive models address partial observability and temporal coherence.
 4. **Separate semantic intent from physical authority.** VLA/LLM planning
    belongs above bounded local skills and hard realtime safety.
-5. **Evaluate the system, not the model name.** Data, normalization, control
+5. **Convert demonstrations into controllable structure.** Reference tracking,
+   motion priors, latent skills, masking, and generative guidance trade exact
+   imitation for broader composition.
+6. **Count optimization as well as interaction.** Parallel simulators make both
+   on-policy freshness and off-policy replay practical; update/data geometry,
+   wall time, and stability decide which helps.
+7. **Evaluate the system, not the model name.** Data, normalization, control
    rate, actuator, planner, hardware limits, and failure recovery define robot
    intelligence in operation.
 
@@ -1018,10 +1402,10 @@ Continue with the
 [open-source ecosystem and reproduction labs](19_open_source_robot_learning_ecosystem.md),
 which turns these seminars into executable project choices.
 
-## 18.12 Folded seminar-exercise guidance
+## 18.14 Folded seminar-exercise guidance
 
 <details>
-<summary>Show reference experiment designs for Seminars 1–10</summary>
+<summary>Show reference experiment designs for Seminars 1–12</summary>
 
 These are solution **structures**, because reproducible measurements—not a
 predetermined winning number—answer the research exercises.
@@ -1069,6 +1453,17 @@ predetermined winning number—answer the research exercises.
     policy, through noisy/dropout planning, to a new visual actor. Use the same
     held-out obstacles and label perception, planning, command tracking,
     contact, actuator, recovery, and safety failures separately.
+11. **Motion control:** validate retargeting limits and contacts before RL. Hold
+    phase initialization and training budget fixed while comparing joint-only
+    and joint-plus-end-effector rewards. Report each weighted term, tracking
+    error, falls, torque, contact violations, and held-out time scaling. A masked
+    condition is a separate information treatment, not just augmentation.
+12. **Parallel off-policy:** match observation/action/reward and run both an
+    interaction-budget and wall-time comparison. Record replay warm-up,
+    update-to-data ratio, target updates, batch size, gradient count, replay age,
+    critic statistics, memory, inference timing, and every seed. An ablation of
+    one FastTD3/FastSAC recipe choice is needed before attributing a gain to the
+    algorithm family.
 
 One compact run table prevents a throughput exercise from becoming a story:
 

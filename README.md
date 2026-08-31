@@ -28,7 +28,7 @@ what the equation changes in an experiment.
 
 The Microduck material matches the
 [`pollen-robotics/microduck_rl`](https://github.com/pollen-robotics/microduck_rl)
-project as of 2026-08-31. Microduck is approximately 25 cm tall, weighs about
+project as of 2026-09-01. Microduck is approximately 25 cm tall, weighs about
 800 g, has 14 actuated joints, runs its policy at 50 Hz, and uses MuJoCo Warp
 through `mjlab` with RSL-RL's Proximal Policy Optimization (PPO).
 
@@ -153,7 +153,9 @@ inclusion policy.
 
 ## Running the book examples
 
-The introductory examples need only the Python standard library:
+The 13 introductory examples need only the Python standard library. These four
+are a quick starting path; the [complete catalog](examples/README.md) maps every
+program to its chapter concept and first experiment:
 
 ```bash
 python examples/bandit_incremental_mean.py
@@ -250,4 +252,5 @@ The book is released under the Apache License 2.0. Microduck project names,
 code excerpts, and measured configuration facts are attributed to the
 open-source `pollen-robotics/microduck_rl` project. Papers and external projects
 remain under their own licenses; this book links to them and paraphrases their
-claims rather than redistributing their content.
+claims rather than redistributing their content. See the [changelog](CHANGELOG.md)
+and [`CITATION.cff`](CITATION.cff) for edition provenance.

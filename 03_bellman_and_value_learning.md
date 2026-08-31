@@ -1,13 +1,28 @@
 # 3. Bellman Methods: From Tables to Deep Q-Learning
 
 Before Proximal Policy Optimization (PPO), learn the simpler idea that
-organizes much of reinforcement learning: the value of a decision is its
+organizes much of reinforcement learning (RL): the value of a decision is its
 immediate reward plus the value of what follows. This is the **Bellman
 principle**.
 
 The tabular setting in this chapter is deliberately small. When every state and
 action can be listed, the algorithms expose their logic without a neural
 network hiding mistakes.
+
+### Historical thread: one recursive idea, several data regimes
+
+Bellman's 1957 dynamic programming assumed a known model and decomposed a long
+optimization into one-step subproblems. Monte Carlo methods estimated outcomes
+from complete samples. Temporal-difference methods learned a Bellman fixed
+point from incomplete experience. Watkins's 1989 thesis and the 1992
+Watkins–Dayan paper established Q-learning's off-policy control rule in the
+tabular setting. The 2013 Deep Q-Network (DQN) work combined Q-learning with a
+convolutional network, replay, and a target network at influential scale.
+
+The changes are not just “use a bigger network.” Each step relaxes an
+assumption—known model, enumerable state, on-policy data—while introducing a
+new source of approximation or instability. The primary records are indexed in
+[SOURCES.md](SOURCES.md#foundations-and-policy-optimization).
 
 ## 3.1 Start with a bandit: action without state transition
 
@@ -90,6 +105,33 @@ Do not let the sums obscure the idea:
 This is a self-consistency equation: a correct value estimate agrees with a
 one-step lookahead using itself.
 
+### Matrix form: policy evaluation is a linear system
+
+For a finite Markov Decision Process (MDP) and a fixed policy, collect all
+state values into vector $v$, expected one-step rewards into $r_\pi$, and
+policy-induced transition probabilities into matrix $P_\pi$. Then
+
+```math
+v=r_\pi+\gamma P_\pi v.
+```
+
+Move the value term to the left:
+
+```math
+(I-\gamma P_\pi)v=r_\pi,
+```
+
+and, when the inverse exists,
+
+```math
+v=(I-\gamma P_\pi)^{-1}r_\pi.
+```
+
+$I$ is the identity matrix. This exact solve is practical only for small
+problems, but it reveals what iterative methods approximate: a fixed point of
+a linear operator. In a million-dimensional or continuous robot state, storing
+$P_\pi$ is impossible, while sampling one transition is easy.
+
 ### Numerical example
 
 Suppose a state has one action. It gives reward 2 and moves deterministically
@@ -133,6 +175,34 @@ V_{k+1}(s)=\max_a\sum_{s',r}p(s',r\mid s,a)
 
 Repeated backups propagate information backward from goals and hazards.
 
+### Why discounted Bellman iteration converges in the tabular case
+
+Define the Bellman optimality operator
+
+```math
+(TV)(s)=\max_a\mathbb{E}[R_{t+1}+\gamma V(S_{t+1})\mid s,a].
+```
+
+For two bounded value functions $V$ and $W$, the maximum and expectation cannot
+amplify their largest difference beyond the discount:
+
+```math
+\lVert TV-TW\rVert_\infty
+\leq\gamma\lVert V-W\rVert_\infty.
+```
+
+This makes $T$ a **contraction** when $\gamma<1$. After $k$ exact sweeps,
+
+```math
+\lVert V_k-V^*\rVert_\infty
+\leq\gamma^k\lVert V_0-V^*\rVert_\infty.
+```
+
+The error shrinks geometrically toward a unique fixed point. This clean result
+depends on exact tabular backups. A neural network update changes many values
+at once and may use off-policy sampled targets, so the proof does not transfer
+unchanged to deep Q-learning.
+
 Run:
 
 ```bash
@@ -156,6 +226,12 @@ G_t=1+0.9(0)+0.9^2(3)=3.43.
 The estimate can move toward 3.43 after the episode finishes. MC does not need
 a transition model and does not bootstrap from its own current value estimate.
 But it must wait for an outcome and can have high variance.
+
+The sample return is unbiased for the value of the policy under the sampled
+start condition, but a single rollout mixes every future source of randomness.
+Long robot episodes can therefore give extremely noisy credit. Truncating an
+episode and incorrectly setting the remaining return to zero adds bias of a
+different kind.
 
 ## 3.7 Temporal-difference learning: learn before the episode ends
 
@@ -195,6 +271,33 @@ V(S_t)\leftarrow4+0.1(2.4)=4.24.
 
 The experience was better than predicted, so the estimate rises.
 
+### The spectrum between one-step TD and Monte Carlo
+
+An $n$-step target uses $n$ observed rewards and then bootstraps:
+
+```math
+G_t^{(n)}=
+\sum_{k=0}^{n-1}\gamma^kR_{t+k+1}
++\gamma^nV(S_{t+n}).
+```
+
+- $n=1$ is the one-step temporal-difference (TD) target.
+- $n$ reaching the true terminal state is a Monte Carlo target.
+- Intermediate $n$ trades a longer piece of real outcome against a later
+  learned bootstrap.
+
+The forward-view $\lambda$-return mixes all $n$-step returns:
+
+```math
+G_t^\lambda=(1-\lambda)
+\sum_{n=1}^{\infty}\lambda^{n-1}G_t^{(n)}.
+```
+
+Eligibility traces compute an equivalent backward credit signal online in the
+tabular continuing case. Generalized Advantage Estimation in Chapter 5 uses
+the same geometric weighting idea on TD residuals. This is an example of an
+old mechanism surviving inside a newer deep algorithm.
+
 ## 3.8 State–Action–Reward–State–Action (SARSA) and Q-learning
 
 SARSA is an on-policy TD control method. Its name lists the transition tuple:
@@ -229,6 +332,26 @@ Try three values of $\epsilon$. Record both final success and the number of
 episodes needed. Exploration is not free, and no single setting is universally
 best.
 
+The implementation maps directly to the equation:
+
+```python
+next_best = 0.0 if done else max(q[(next_state, a)] for a in ACTIONS)
+td_error = reward + GAMMA * next_best - q[(state, action)]
+q[(state, action)] += ALPHA * td_error
+```
+
+The first line implements the terminal-aware bootstrap. The second constructs
+the bracketed Q-learning error. The third applies the step size $\alpha$. Read
+the complete runnable mapping in
+[`examples/tabular_q_learning.py`](examples/tabular_q_learning.py), then alter
+only the target to use the actually selected next action to obtain SARSA.
+
+In the classic cliff example, that difference matters. Q-learning learns the
+greedy target path even while exploratory behavior sometimes falls from it;
+SARSA evaluates its exploratory behavior and can prefer a safer path farther
+from the cliff. Neither label means “safe”: the result depends on reward,
+exploration, and environment.
+
 ## 3.9 From Q-table to Deep Q-Network
 
 A robot camera produces too many possible observations for a table. A Deep
@@ -262,6 +385,54 @@ pixels on Atari. That is historically important evidence for discrete-action
 domains; it is not evidence that DQN is the natural choice for 14 simultaneous
 continuous joint targets.
 
+### One DQN update, from tensor to optimizer
+
+For a replay minibatch of size $B$, a practical update is:
+
+```python
+with no_gradient():
+    next_q = target_network(next_observation).max(axis=1)
+    target = reward + gamma * (1.0 - terminated) * next_q
+
+all_q = online_network(observation)           # shape (B, number_of_actions)
+chosen_q = gather(all_q, action_index)        # shape (B,)
+loss = mean(huber_loss(chosen_q, target))
+optimizer.zero_grad()
+loss.backward()
+optimizer.step()
+```
+
+`gather` is the code counterpart of selecting $Q(s,a)$ for the action stored in
+each transition. The maximum selects the target action. `no_gradient` and the
+target network prevent the target branch from being optimized in the same
+step. A Huber loss is quadratic near zero and linear for large errors, reducing
+the influence of rare huge temporal-difference targets relative to pure
+squared loss.
+
+The official [CleanRL DQN implementation](https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/dqn.py)
+is a compact executable reference; the original DeepMind DQN result should be
+read from the paper because later repositories contain many extensions.
+
+### What followed DQN, and which problem each change addresses
+
+Several influential extensions are often bundled into “modern DQN”:
+
+| Extension | Problem targeted | Core change |
+| --- | --- | --- |
+| Double DQN | maximization overestimation | select next action online, evaluate it with target network |
+| prioritized replay | many stored transitions have little current learning signal | sample larger-error transitions more often and importance-correct |
+| dueling network | action values share a large state-value component | estimate value and action advantage streams |
+| multi-step return | reward propagates slowly through one-step backups | include several observed rewards before bootstrapping |
+| distributional RL | an expectation hides outcome structure | predict a return distribution, not only its mean |
+| noisy networks | hand-designed $\epsilon$ schedule | learn parameter-space exploration noise |
+
+Rainbow combined six such components and tested their interaction on Atari.
+These are alternatives within deep **discrete** value learning, not a universal
+frontier for continuous robotics. As of 2026, value distributions,
+representation learning, large-scale replay, and offline value learning remain
+active ingredients, while continuous motor control usually uses an actor,
+planning, or action-generation model to avoid enumerating actions.
+
 ## 3.10 Why continuous robot action changes the algorithm
 
 For four discrete actions, computing $\max_a Q(s,a)$ is easy: evaluate all
@@ -294,6 +465,22 @@ This combination is called the **deadly triad**. It does not mean every such
 algorithm fails. It explains why replay buffers, target networks, double
 critics, conservative objectives, and careful evaluation exist.
 
+The danger can be understood as a feedback loop:
+
+```text
+slightly wrong value at an unsupported next action
+        -> enters a bootstrap target
+        -> shared network generalizes the error to other states
+        -> greedy/off-policy selection seeks the inflated region
+        -> new targets amplify the same error
+```
+
+A lower training loss does not prove the values are correct: predictions and
+targets can move together. Held-out Bellman error is also incomplete because
+the target contains estimates. Policy return, calibration against realized
+returns, target statistics, Q-scale, and coverage all provide complementary
+evidence.
+
 ## 3.12 Partial observability and memory
 
 Bellman equations are written in terms of Markov state: all information needed
@@ -325,6 +512,23 @@ history.
 6. Why is ordinary DQN inconvenient for a 14D continuous action vector?
 7. Give one hidden physical property that can make a robot observation
    non-Markov and one way to expose or infer it.
+8. For a two-state fixed policy with
+   $P_\pi=\begin{bmatrix}0.5&0.5\\0&1\end{bmatrix}$,
+   $r_\pi=[1,0]^T$, $\gamma=0.8$, and the second state terminal with value
+   zero, solve the first state's Bellman equation without a matrix inverse.
+9. If $\gamma=0.9$ and the initial maximum value error is 10, what upper bound
+   does the contraction result give after 20 exact Bellman sweeps?
+10. Compute the three-step target for rewards $[1,2,3]$, $\gamma=0.9$, and
+    bootstrap value $V(S_{t+3})=4$. Identify the observed and estimated parts.
+11. In the DQN pseudocode, explain why `gather` and `max` act on different
+    action choices.
+12. Write the Double DQN target using an online network to select and a target
+    network to evaluate the next action. Which bias is it intended to reduce?
+13. Why can a critic's training loss fall while its induced robot policy gets
+    worse?
+14. Choose between a return expectation and a return distribution for a robot
+    whose two outcomes are “normal landing” and “rare destructive impact.”
+    State what the richer prediction still cannot guarantee.
 
 Continue with the [reinforcement-learning algorithm
 map](04_rl_algorithm_families.md), where these dimensions become a practical
@@ -356,6 +560,45 @@ selection framework.
    learned adaptation latent can infer its effect; an additional force/slip
    sensor can expose it more directly. Motor temperature, payload, and backlash
    are other valid examples.
+8. Let the first value be $v$. Its equation is
+   $v=1+0.8(0.5v+0.5\times0)=1+0.4v$. Thus
+   $0.6v=1$ and $v=5/3\approx1.667$. The self-loop repeatedly earns reward 1;
+   transition to the terminal state ends future reward.
+9. The bound is $10(0.9)^{20}\approx1.216$. It is an upper bound in the
+   maximum norm, not a claim that every instance attains exactly that error.
+10. The target is
+
+    ```math
+    1+0.9(2)+0.9^2(3)+0.9^3(4)
+    =1+1.8+2.43+2.916=8.146.
+    ```
+
+    The first three terms are observed rewards; the final term estimates all
+    value beyond the sampled three-step segment.
+11. `gather` selects the value of the action that was actually stored in each
+    replay transition, producing the prediction being trained. `max` chooses
+    the greedy next action used by the Q-learning target. They refer to current
+    behavior evidence and next-state target behavior respectively.
+12. With online parameters $\theta$ and target parameters $\bar\theta$:
+
+    ```math
+    a^*=\arg\max_a Q_\theta(s',a),
+    \qquad
+    y=r+\gamma(1-d)Q_{\bar\theta}(s',a^*).
+    ```
+
+    Separating selection from evaluation reduces the positive bias caused by
+    maximizing noisy estimates from the same estimator.
+13. Bootstrapped targets contain critic predictions, so prediction and target
+    can become mutually consistent at wrong values. Loss is measured on the
+    replay distribution, while the actor may seek unsupported high-value
+    actions elsewhere. Scale collapse, distribution shift, or exploitation of
+    approximation error can therefore reduce loss and harm realized return.
+14. A return distribution can expose probability mass on destructive impact
+    that the same expected value would hide. It supports quantile or risk-
+    sensitive decisions. It still depends on correct data coverage/modeling and
+    cannot replace hard hardware protection or guarantee safety outside the
+    evaluated distribution.
 
 The arithmetic behind answers 1 and 2 can be checked with:
 

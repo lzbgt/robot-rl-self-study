@@ -16,6 +16,11 @@ PDF = ROOT / "dist" / "robot-rl-self-study.pdf"
 LOG = ROOT / "build" / "robot-rl-self-study.log"
 CHECKSUMS = ROOT / "dist" / "SHA256SUMS"
 LATEX_HEADER = ROOT / "pdf" / "latex-header.tex"
+PDF_MARKDOWN = [
+    ROOT / "pdf" / "frontmatter.md",
+    *sorted(ROOT.glob("[0-9][0-9]_*.md")),
+    ROOT / "SOURCES.md",
+]
 COLOR_RE = re.compile(
     r"\\definecolor\{([^}]+)\}\{HTML\}\{([0-9A-Fa-f]{6})\}"
 )
@@ -134,6 +139,8 @@ def main() -> int:
         "Reinforcement Learning Foundations",
         "Proximal Policy Optimization (PPO) from Equations to Code",
         "Microduck",
+        "JumpRover",
+        "FastTD3",
         "Problem 1: observation dimensions",
         "Primary Sources and Open-Source Study Index",
     )
@@ -147,9 +154,14 @@ def main() -> int:
             re.MULTILINE,
         )
     )
-    if answer_banners != 38:
+    expected_answer_banners = sum(
+        path.read_text(encoding="utf-8").count("<summary>")
+        for path in PDF_MARKDOWN
+    )
+    if answer_banners != expected_answer_banners:
         errors.append(
-            f"PDF contains {answer_banners} reference-answer banners; expected 38"
+            f"PDF contains {answer_banners} reference-answer banners; expected "
+            f"{expected_answer_banners} from the Markdown sources"
         )
 
     fonts = command("pdffonts", str(PDF))
@@ -167,6 +179,9 @@ def main() -> int:
         r"Overfull \\[hv]box": "layout overflow",
         r"Undefined control sequence": "undefined LaTeX command",
         r"Missing character:": "missing font glyph",
+        r"Package fancyhdr Warning: \\headheight is too small": (
+            "undersized running-header layout"
+        ),
         r"LaTeX Error:": "LaTeX error",
         r"Emergency stop": "emergency TeX stop",
         r"Rerun to get cross-references right": "unresolved cross-reference pass",
