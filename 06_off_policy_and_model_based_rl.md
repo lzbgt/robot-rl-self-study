@@ -1,9 +1,9 @@
 # 6. Off-Policy and Model-Based Reinforcement Learning
 
-PPO throws away old rollouts after a few update epochs. That can be entirely
-reasonable in fast parallel simulation, but it feels wasteful when one physical
-robot transition is expensive. Off-policy and model-based methods try to learn
-more from each interaction.
+Proximal Policy Optimization (PPO) throws away old rollouts after a few update
+epochs. That can be entirely reasonable in fast parallel simulation, but it
+feels wasteful when one physical robot transition is expensive. Off-policy and
+model-based methods try to learn more from each interaction.
 
 This chapter explains the motivation and failure modes before the algorithms.
 
@@ -65,7 +65,7 @@ Two widely used responses are:
 - learn two critics and use the smaller estimate; and
 - constrain or regularize actions toward regions covered by data.
 
-## 6.4 TD3: deterministic continuous control
+## 6.4 Twin Delayed Deep Deterministic Policy Gradient (TD3): deterministic continuous control
 
 Twin Delayed Deep Deterministic Policy Gradient (TD3) learns:
 
@@ -102,7 +102,7 @@ The [TD3 paper](https://arxiv.org/abs/1802.09477) isolates these mechanisms.
 Its benchmark findings support those mechanisms in the evaluated continuous
 control tasks; they do not erase the need for robot-specific evaluation.
 
-## 6.5 SAC: maximum-entropy actor-critic
+## 6.5 Soft Actor-Critic (SAC): maximum-entropy actor-critic
 
 Soft Actor-Critic (SAC) learns a stochastic policy and adds entropy to the
 return:
@@ -190,7 +190,8 @@ Executing only the first action is **receding-horizon control**. Replanning
 limits damage from prediction error because reality corrects the plan at every
 step.
 
-Model-based RL learns some or all of the model and uses it to improve behavior.
+Model-based reinforcement learning (RL) learns some or all of the model and
+uses it to improve behavior.
 
 ## 6.8 Model error compounds through imagination
 
@@ -255,7 +256,7 @@ Questions to ask before applying it to a robot:
 - What is the runtime actor size and latency?
 - How is uncertainty outside the replay distribution handled?
 
-## 6.11 TD-MPC2
+## 6.11 Temporal Difference Learning for Model Predictive Control, second generation (TD-MPC2)
 
 [TD-MPC2](https://arxiv.org/abs/2310.16828) combines a learned latent model,
 temporal-difference values, a policy prior, and local trajectory optimization.
@@ -300,7 +301,8 @@ To compare PPO and SAC on one simulated robot:
 1. freeze robot model, observations, actions, reward, resets, randomization,
    control rate, and evaluator;
 2. give both enough network capacity but report parameter counts;
-3. report environment transitions and wall-clock/GPU time;
+3. report environment transitions, wall-clock time, and graphics processing
+   unit (GPU) time;
 4. evaluate deterministic policies on identical held-out seeds and physics;
 5. show median and uncertainty across training seeds;
 6. include failure categories, not only average return; and
@@ -363,7 +365,7 @@ Continue with [robot dynamics, control, and estimation](07_robotics_control_and_
    ```
 
    Expire the residual on stale input or deadline miss, rate-limit the combined
-   target, preserve MCU current/speed/tilt limits, and prove that residual zero
-   returns to the accepted baseline.
+   target, preserve microcontroller unit (MCU) current/speed/tilt limits, and
+   prove that residual zero returns to the accepted baseline.
 
 </details>

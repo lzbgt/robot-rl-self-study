@@ -20,10 +20,11 @@ them to a modern GPU-parallel PPO system, and finally learn how current robot
 research extends or departs from that recipe.
 
 The book assumes basic Python but no prior reinforcement learning (RL), control
-theory, or robotics. A technical term is defined when it first appears and is
-also indexed in Chapter 20. Equations are always followed by a plain-language
-interpretation, a numerical example, and a question about what the equation
-changes in an experiment.
+theory, or robotics. Each chapter spells out a technical abbreviation at its
+first prose use, even when an earlier chapter already introduced it; broadly
+useful terms are also indexed in Chapter 20. Equations are always followed by
+a plain-language interpretation, a numerical example, and a question about
+what the equation changes in an experiment.
 
 The Microduck material matches the
 [`pollen-robotics/microduck_rl`](https://github.com/pollen-robotics/microduck_rl)
@@ -180,8 +181,11 @@ uv run train Mjlab-Velocity-Flat-MicroDuck \
 The committed [PDF](dist/robot-rl-self-study.pdf) is generated from the same 20
 chapter files as the GitHub edition. The builder converts fenced `math` blocks
 to native display equations, expands every folded answer at its chapter end,
-embeds the fonts, wraps code and URLs, and fails validation if TeX reports a
-line, table, or page overflow.
+embeds the fonts, wraps code and URLs, and applies a semantic visual system:
+navy for concepts, teal for navigation, amber for revealed answers, and
+blue-gray for executable material. Labels, hierarchy, frames, and whitespace
+duplicate the color cues for grayscale and color-vision accessibility. The
+build fails validation if TeX reports a line, table, or page overflow.
 
 On Arch Linux, install the reproducible toolchain with:
 

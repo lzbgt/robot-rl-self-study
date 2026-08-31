@@ -86,10 +86,10 @@ The subscript $\theta$ means changing those parameters changes the function.
 Training searches for parameters that make useful trajectories more likely.
 
 A **hyperparameter** is chosen by the experimenter rather than learned by the
-optimizer: learning rate, discount factor, network width, PPO clip value, or
-rollout length are examples.
+optimizer: learning rate, discount factor, network width, Proximal Policy
+Optimization (PPO) clip value, or rollout length are examples.
 
-## 2.3 Probability is how RL represents uncertainty
+## 2.3 Probability is how reinforcement learning (RL) represents uncertainty
 
 Robots face uncertainty from sensor noise, contact variation, delayed state,
 random commands, randomized simulation, and exploration.
@@ -285,8 +285,8 @@ Common activations include:
 
 | Activation | Formula or behavior | Practical note |
 | --- | --- | --- |
-| ReLU | $\max(0,x)$ | cheap; negative side has zero gradient |
-| ELU | $x$ if positive, smooth negative saturation otherwise | used by the Microduck actor/critic |
+| rectified linear unit (ReLU) | $\max(0,x)$ | cheap; negative side has zero gradient |
+| exponential linear unit (ELU) | $x$ if positive, smooth negative saturation otherwise | used by the Microduck actor/critic |
 | tanh | maps to $(-1,1)$ | useful for bounded outputs; can saturate |
 | sigmoid | maps to $(0,1)$ | common for probabilities or gates |
 
@@ -341,7 +341,7 @@ $\epsilon$ is a small constant that avoids division by zero. Normalization can
 improve optimization, but it becomes part of the learned input contract. If
 training uses $\hat{o}$ and deployment feeds raw $o$, the actor receives a
 different problem. That is why Microduck's export path bakes the normalizer
-into ONNX.
+into Open Neural Network Exchange (ONNX).
 
 Reward scaling also matters. Multiplying every reward by 100 leaves the
 mathematical optimal policy unchanged in an ideal tabular setting, but it
@@ -403,7 +403,8 @@ The small bandit example in
 [`examples/bandit_incremental_mean.py`](examples/bandit_incremental_mean.py)
 uses expectation, sampling, and an incremental mean without any neural network.
 Run it before continuing with
-[Bellman methods from tables to DQN](03_bellman_and_value_learning.md).
+[Bellman methods from tables to a Deep Q-Network
+(DQN)](03_bellman_and_value_learning.md).
 
 ## 2.14 Folded solutions
 

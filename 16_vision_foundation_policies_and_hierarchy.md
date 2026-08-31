@@ -6,13 +6,14 @@ cloud reasoning, then shows where modern vision-language-action models fit.
 
 ## 16.1 Perception changes the observation problem
 
-**Proprioception** measures the robot itself: joint encoders, IMU, motor state.
-**Exteroception** measures the surrounding world: camera, depth, LiDAR, radar,
-or tactile arrays.
+**Proprioception** measures the robot itself: joint encoders, an inertial
+measurement unit (IMU), and motor state.
+**Exteroception** measures the surrounding world: camera, depth, light
+detection and ranging (LiDAR), radar, or tactile arrays.
 
-Images are high-dimensional and ambiguous. One RGB frame does not directly
-state depth, velocity, object identity, traversability, or occlusion. A visual
-control system commonly needs:
+Images are high-dimensional and ambiguous. One red-green-blue (RGB) frame does
+not directly state depth, velocity, object identity, traversability, or
+occlusion. A visual control system commonly needs:
 
 - calibration (intrinsics/extrinsics);
 - timestamps and synchronization;
@@ -24,6 +25,10 @@ control system commonly needs:
 ## 16.2 Three ways to connect vision to control
 
 ### Modular perception and planning
+
+A modular stack may use **simultaneous localization and mapping (SLAM)** to
+estimate the robot's pose while constructing a map. The compact diagram below
+uses the abbreviation after introducing the full term.
 
 ```text
 camera -> detector/depth/SLAM -> map or local obstacles
@@ -123,8 +128,8 @@ a_{t:t+H}=\pi(I_{t-k:t},\text{language},q_t).
 ```
 
 Most VLA pretraining is imitation/supervised sequence modeling on robot
-demonstrations, not classical online RL. RL may later fine-tune preferences or
-task reward, but the terms should not be conflated.
+demonstrations, not classical online reinforcement learning (RL). RL may later
+fine-tune preferences or task reward, but the terms should not be conflated.
 
 ## 16.6 Octo: an open generalist policy
 
@@ -150,10 +155,11 @@ The 2024 [OpenVLA paper](https://arxiv.org/abs/2406.09246) presents an open
 pretrained visual/language components with action prediction. It also studies
 parameter-efficient fine-tuning and quantized serving.
 
-Those scales are dramatically different from Microduck's small 50 Hz MLP.
-OpenVLA may help interpret language and visual manipulation tasks; placing a
-multi-billion-parameter model directly in a hard balance loop would require a
-completely different latency, reliability, and safety case.
+Those scales are dramatically different from Microduck's small 50 Hz
+multilayer perceptron (MLP). OpenVLA may help interpret language and visual
+manipulation tasks; placing a multi-billion-parameter model directly in a hard
+balance loop would require a completely different latency, reliability, and
+safety case.
 
 ## 16.8 $\pi_0$ and flow-matching action generation
 
@@ -182,7 +188,7 @@ These layers solve different timescales:
 | task planner | ordered skill graph | feasibility and recovery |
 | navigation/perception | local path or velocity | obstacles, localization, uncertainty |
 | learned motor skill | joint/velocity targets | balance, contact, actuator mismatch |
-| realtime controller | current/PWM/enable | deadlines and hard limits |
+| realtime controller | current/pulse-width modulation (PWM)/enable | deadlines and hard limits |
 
 A large model can choose “follow the person at 0.3 m/s.” It should not invent a
 raw 20 kHz PWM stream. A small local policy can stabilize a commanded motion
@@ -208,8 +214,9 @@ parameters: dock ID, approach side
 termination: charging contact confirmed or timeout/fault
 ```
 
-The option boundary is also an API and safety boundary. Exact typed parameters
-are safer than free-form text passed into control code.
+The option boundary is also an application programming interface (API) and
+safety boundary. Exact typed parameters are safer than free-form text passed
+into control code.
 
 ## 16.11 Cloud agent: proposal, not authority
 
@@ -230,7 +237,7 @@ A robust flow is:
 human request + summarized world state
                   |
                   v
-cloud agent proposes exact option IDs/parameters
+cloud agent proposes exact option identifiers (IDs)/parameters
                   |
                   v
 local schema validation + precondition check
@@ -290,10 +297,11 @@ affects permitted behavior rather than being logged and ignored.
 
 ## 16.14 Worked Jump Rover architecture example
 
-For a wheeled-leg rover with an SG2002 brain and a realtime motion MCU:
+For a wheeled-leg rover with an SG2002 brain and a realtime motion
+microcontroller unit (MCU):
 
-1. keep motor current/FOC, enable, limits, watchdog, and emergency behavior on
-   realtime hardware;
+1. keep motor current/field-oriented control (FOC), enable, limits, watchdog,
+   and emergency behavior on realtime hardware;
 2. run a bounded balance/drive policy only where worst-case timing is proven;
 3. run perception, world state, local planning, and skill orchestration on the
    onboard brain;
@@ -309,8 +317,9 @@ realtime-controller evidence.
 1. Explain why a visible simulated obstacle is not an actor observation.
 2. Compare modular and end-to-end obstacle avoidance for a small biped.
 3. Why is a VLA usually closer to imitation learning than online RL?
-4. Design an exact JSON-like option request for “follow person,” including
-   speed and stop conditions but no raw motor command.
+4. Design an exact JavaScript Object Notation (JSON)-like option request for
+   “follow person,” including speed and stop conditions but no raw motor
+   command.
 5. What should happen if cloud response arrives 3 seconds late?
 6. List the latency budgets that must be measured before placing a visual model
    in a control loop.
@@ -358,15 +367,17 @@ Continue with [research literacy and capstone projects](17_research_literacy_and
 5. Reject a response that arrives after its bound or revalidate it against the
    current world and issue a fresh request. Never execute stale semantic intent
    merely because the JSON was valid when generated.
-6. Measure capture/exposure, preprocessing, queueing, inference mean/tail/WCET,
-   postprocessing, transport, planner, actuation delivery, total observation
-   age, jitter, missed deadlines, and fallback transition.
+6. Measure capture/exposure, preprocessing, queueing, inference mean/tail and
+   worst-case execution time (WCET), postprocessing, transport, planner,
+   actuation delivery, total observation age, jitter, missed deadlines, and
+   fallback transition.
 7. A minimal manifest needs policy/model hashes, training commit, robot/model
    revision, input/output schemas, normalization, action scaling, policy rate,
    maximum input age, inference WCET, validated operating envelope, exclusions,
    calibration, evaluator report, and rollback artifact.
 8. Hold out a person/appearance, lighting/background, and motion/occlusion
    pattern. Also test crossing identities and complete track loss; report false
-   follow, missed follow, ID switch, age, localization error, and stop latency.
+   follow, missed follow, track identifier (ID) switch, age, localization
+   error, and stop latency.
 
 </details>

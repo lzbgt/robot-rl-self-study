@@ -24,8 +24,9 @@ Simulation performance alone is not hardware-release evidence.
 
 ## Pull-request checklist
 
-- [ ] New jargon is explained at first use and, when broadly useful, added to
-      Chapter 20.
+- [ ] Every chapter spells out each abbreviation at its first prose use as
+      `full term (SHORT)`; new jargon is explained inline and, when broadly
+      useful, added to Chapter 20.
 - [ ] Equations define every symbol, unit, and tensor shape used.
 - [ ] Claims link to primary sources or official repositories.
 - [ ] Evidence boundaries say what a paper or experiment does *not* establish.

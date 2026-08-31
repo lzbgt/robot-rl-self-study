@@ -1,8 +1,8 @@
 # 4. The Reinforcement-Learning Algorithm Map
 
-Algorithm names can make RL feel like a collection of unrelated inventions.
-Most methods can be located along a few design axes. Learning those axes is
-more durable than memorizing a leaderboard.
+Algorithm names can make reinforcement learning (RL) feel like a collection of
+unrelated inventions. Most methods can be located along a few design axes.
+Learning those axes is more durable than memorizing a leaderboard.
 
 ## 4.1 First ask what data interaction is allowed
 
@@ -43,10 +43,10 @@ A **dynamics model** predicts how state changes:
 - **Model-based RL** uses a known or learned model to evaluate or optimize
   future action sequences.
 
-The labels do not mean model-free robot design has no physics knowledge. A PPO
-policy trained in MuJoCo relies heavily on a simulator model to generate data;
-the learning algorithm itself simply does not differentiate through or plan
-with a learned $f_\psi$ at runtime.
+The labels do not mean model-free robot design has no physics knowledge. A
+Proximal Policy Optimization (PPO) policy trained in MuJoCo relies heavily on a
+simulator model to generate data; the learning algorithm itself simply does
+not differentiate through or plan with a learned $f_\psi$ at runtime.
 
 Model-based methods can be more sample efficient because one transition helps
 learn dynamics reusable by many plans. Their danger is **model bias**: planning
@@ -57,7 +57,8 @@ can exploit small prediction errors and imagine impossible success.
 ### Value-based
 
 Value-based methods learn $V$ or $Q$ and derive behavior by choosing a
-high-value action. DQN is the canonical deep discrete-action example.
+high-value action. A Deep Q-Network (DQN) is the canonical deep discrete-action
+example.
 
 ### Policy-based
 
@@ -72,7 +73,8 @@ An **actor-critic** has both:
 - actor: produces actions;
 - critic: evaluates states or state-action pairs to improve the actor.
 
-PPO, SAC, and TD3 are actor-critic methods, but their data use and objectives
+PPO, Soft Actor-Critic (SAC), and Twin Delayed Deep Deterministic Policy
+Gradient (TD3) are actor-critic methods, but their data use and objectives
 differ substantially.
 
 ## 4.4 On-policy versus off-policy
@@ -82,9 +84,9 @@ policy. PPO is approximately on-policy. Old data becomes stale after a policy
 change, so it is normally discarded.
 
 An off-policy method can update a target policy using data from other behavior
-policies. SAC, TD3, DQN, IQL, and CQL are off-policy in different settings.
-A replay buffer improves sample reuse but makes the learning distribution less
-like current deployment.
+policies. SAC, TD3, DQN, Implicit Q-Learning (IQL), and Conservative Q-Learning
+(CQL) are off-policy in different settings. A replay buffer improves sample
+reuse but makes the learning distribution less like current deployment.
 
 The tradeoff is not simply “off-policy is better because it reuses data”:
 
@@ -109,6 +111,11 @@ Stochastic does not mean careless or random behavior. The distribution is
 conditioned on the observation, and its spread is learned or configured.
 
 ## 4.6 Core families at a glance
+
+**Temporal Difference Learning for Model Predictive Control, second generation
+(TD-MPC2)** is the newer member of the TD-MPC method family. The long form
+describes its combination of temporal-difference value learning and
+model-predictive planning; the “2” identifies the later scalable method.
 
 | Method | Action | Data | Learned objects | Characteristic idea | Typical fit |
 | --- | --- | --- | --- | --- | --- |
@@ -300,9 +307,10 @@ the system architecture must decide. Continue with
    if rewards and coverage support offline improvement. Permission for safe
    online interaction would open a separate fine-tuning phase.
 4. **Multimodal visual manipulation:** start with a diffusion or other
-   multimodal imitation policy. Plain squared-error BC may average incompatible
-   grasps. Additional reward-bearing data could justify offline RL.
-5. **Known constrained rover:** start with model-predictive control (MPC), which
+   multimodal imitation policy. Plain squared-error behavior cloning (BC) may
+   average incompatible grasps. Additional reward-bearing data could justify
+   offline RL.
+5. **Known constrained rover:** start with Model Predictive Control (MPC), which
    can use the known model and express constraints. Learn a residual/model only
    if held-out traces reveal systematic error the baseline cannot handle.
 6. **Changing payload:** start with a history-conditioned/adaptive locomotion

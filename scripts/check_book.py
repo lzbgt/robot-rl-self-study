@@ -29,6 +29,88 @@ EXERCISE_HEADING_RE = re.compile(
     r"What to reproduce|Microduck experiment|Capstone)",
     re.IGNORECASE | re.MULTILINE,
 )
+ABBREVIATION_EXPANSIONS = {
+    "AArch64": r"64-bit Arm architecture\s+\(AArch64\)",
+    "ACT": r"Action Chunking with Transformers\s+\(ACT\)",
+    "AI": r"artificial intelligence\s+\(AI\)",
+    "API": r"application programming interfaces?\s+\(APIs?\)",
+    "BAM": r"Better Actuator Models\s+\(BAM\)",
+    "BC": r"behavior cloning\s+\(BC\)",
+    "BLDC": r"brushless direct[- ]current(?: motor)?\s+\(BLDC\)",
+    "CAD": r"computer-aided design\s+\(CAD\)",
+    "CEM": r"cross-entropy method\s+\(CEM\)",
+    "CoM": r"center of mass\s+\(CoM\)",
+    "CPU": r"central processing units?\s+\(CPUs?\)",
+    "CQL": r"Conservative Q-Learning\s+\(CQL\)",
+    "CUDA": r"Compute Unified Device Architecture\s+\(CUDA\)",
+    "CVAE": r"conditional variational autoencoder\s+\(CVAE\)",
+    "D4RL": r"Datasets for Deep Data-Driven Reinforcement Learning\s+\(D4RL\)",
+    "DAgger": r"Dataset Aggregation\s+\(DAgger\)",
+    "DQN": r"Deep Q-Network\s+\(DQN\)",
+    "DP": r"dynamic programming\s+\(DP\)",
+    "DoF": r"degrees? of freedom\s+\(DoFs?\)",
+    "DR": r"domain randomization\s+\(DR\)",
+    "ELU": r"exponential linear unit\s+\(ELU\)",
+    "FOC": r"field-oriented control\s+\(FOC\)",
+    "FAST": r"Frequency-space Action Sequence Tokenization\s+\(FAST\)",
+    "FPS": r"frames per second\s+\(FPS\)",
+    "GAE": r"Generalized Advantage Estimation\s+\(GAE\)",
+    "GPU": r"graphics processing units?\s+\(GPUs?\)",
+    "GR00T": r"Generalist Robot 00 Technology\s+\(GR00T\)",
+    "IK": r"inverse kinematics\s+\(IK\)",
+    "IMU": r"inertial measurement unit\s+\(IMU\)",
+    "IQL": r"Implicit Q-Learning\s+\(IQL\)",
+    "ID": r"identifiers?\s+\(IDs?\)",
+    "JSON": r"JavaScript Object Notation\s+\(JSON\)",
+    "KL": r"Kullback[–—-]Leibler\s+\(KL\)",
+    "LLM": r"large language model\s+\(LLM\)",
+    "LM": r"language model\s+\(LM\)",
+    "LiDAR": r"light detection and ranging\s+\(LiDAR\)",
+    "LoRA": r"Low-Rank Adaptation\s+\(LoRA\)",
+    "MC": r"Monte Carlo\s+\(MC\)",
+    "MCU": r"microcontroller unit\s+\(MCU\)",
+    "MDP": r"Markov Decision Process\s+\(MDP\)",
+    "MJCF": (
+        r"MuJoCo(?:'s)? (?:Extensible Markup Language \(XML\)|XML) "
+        r"model format\s+\(MJCF\)"
+    ),
+    "MLP": r"multilayer perceptron\s+\(MLP\)",
+    "MPC": r"Model Predictive Control\s+\(MPC\)",
+    "NaN": r"not-a-number\s+\(NaN\)",
+    "ONNX": r"Open Neural Network Exchange\s+\(ONNX\)",
+    "PD": r"proportional[–—-]derivative\s+\(PD\)",
+    "PID": r"proportional[–—-]integral[–—-]derivative\s+\(PID\)",
+    "POMDP": r"Partially Observable Markov Decision Process\s+\(POMDP\)",
+    "PPO": r"Proximal Policy Optimization\s+\(PPO\)",
+    "PWM": r"pulse-width modulation\s+\(PWM\)",
+    "RGB": r"red-green-blue\s+\(RGB\)",
+    "RL": r"reinforcement learning\s+\(RL\)",
+    "RMA": r"Rapid Motor Adaptation\s+\(RMA\)",
+    "ReLU": r"rectified linear unit\s+\(ReLU\)",
+    "RT-1": r"Robotics Transformer 1\s+\(RT-1\)",
+    "RT-2": r"Robotics Transformer 2\s+\(RT-2\)",
+    "RT-X": r"Robotics Transformer X\s+\(RT-X\)",
+    "RSL-RL": (
+        r"Robotic Systems Lab(?:'s)? reinforcement learning\s+\(RSL-RL\)"
+    ),
+    "SAC": r"Soft Actor-Critic\s+\(SAC\)",
+    "SARSA": r"State[–—-]Action[–—-]Reward[–—-]State[–—-]Action\s+\(SARSA\)",
+    "SHA-256": r"Secure Hash Algorithm 256-bit\s+\(SHA-256\)",
+    "SLAM": r"simultaneous localization and mapping\s+\(SLAM\)",
+    "TD": r"temporal[–—-]difference\s+\(TD\)",
+    "TD-MPC2": (
+        r"Temporal Difference Learning for Model Predictive Control, "
+        r"second generation\s+\(TD-MPC2\)"
+    ),
+    "TD3": r"Twin Delayed Deep Deterministic Policy Gradient\s+\(TD3\)",
+    "UI": r"user interface\s+\(UI\)",
+    "VLA": r"vision-language-action\s+\(VLAs?\)",
+    "VLM": r"vision-language model\s+\(VLM\)",
+    "WCET": r"worst-case execution time\s+\(WCET\)",
+    "XML": r"Extensible Markup Language\s+\(XML\)",
+    "X11": r"X Window System version 11\s+\(X11\)",
+    "YAML": r"YAML Ain't Markup Language\s+\(YAML\)",
+}
 
 
 def local_target(raw_target: str) -> str | None:
@@ -154,6 +236,54 @@ def check_markdown_conventions() -> tuple[list[str], int, int]:
     return errors, math_blocks, solution_folds
 
 
+def prose_without_code(text: str) -> str:
+    """Preserve prose line numbers while removing code, math, and link targets."""
+
+    output: list[str] = []
+    in_fence = False
+    for line in text.splitlines():
+        if line.strip().startswith("```"):
+            in_fence = not in_fence
+            output.append("")
+        elif in_fence:
+            output.append("")
+        else:
+            line = re.sub(r"`[^`\n]+`", "", line)
+            line = re.sub(r"\]\([^)]+\)", "]", line)
+            line = line.replace("**", "").replace("__", "")
+            output.append(line)
+    return "\n".join(output)
+
+
+def check_first_use_expansions() -> list[str]:
+    """Require important abbreviations to be expanded in every chapter."""
+
+    errors: list[str] = []
+    for chapter in sorted(BOOK_ROOT.glob("[0-9][0-9]_*.md")):
+        prose = prose_without_code(chapter.read_text(encoding="utf-8"))
+        search_text = prose.replace("\n", " ")
+        for short, full_pattern in ABBREVIATION_EXPANSIONS.items():
+            plural = "s?" if short not in {"CoM", "DAgger", "LoRA"} else ""
+            use_re = re.compile(
+                rf"(?<![A-Za-z0-9-]){re.escape(short)}{plural}(?![A-Za-z0-9-])"
+            )
+            first_use = use_re.search(search_text)
+            if first_use is None:
+                continue
+            window = search_text[
+                max(0, first_use.start() - 180) : first_use.end() + 30
+            ]
+            window = re.sub(r"\s+", " ", window)
+            valid = re.search(full_pattern, window, re.IGNORECASE) is not None
+            if not valid:
+                line = prose.count("\n", 0, first_use.start()) + 1
+                errors.append(
+                    f"{chapter.name}:{line}: first prose use of {short} must "
+                    f"spell out the term as full name ({short})"
+                )
+    return errors
+
+
 def run_examples() -> list[str]:
     errors: list[str] = []
     for name in EXAMPLES:
@@ -180,7 +310,12 @@ def main() -> int:
     args = parser.parse_args()
 
     convention_errors, math_blocks, solution_folds = check_markdown_conventions()
-    errors = check_local_links() + check_chapter_index() + convention_errors
+    errors = (
+        check_local_links()
+        + check_chapter_index()
+        + convention_errors
+        + check_first_use_expansions()
+    )
     if not args.skip_examples:
         errors += run_examples()
     if errors:

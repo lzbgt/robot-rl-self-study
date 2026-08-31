@@ -1,9 +1,9 @@
 # 15. Modern Robot Locomotion, Adaptation, and Sim-to-Real Research
 
 Recent locomotion systems combine ideas rather than relying on one magical
-algorithm: GPU-parallel simulation, calibrated actuator models, domain
-randomization, privileged training information, histories or latent adaptation,
-curricula, and strict deployment interfaces.
+algorithm: graphics processing unit (GPU)-parallel simulation, calibrated
+actuator models, domain randomization, privileged training information,
+histories or latent adaptation, curricula, and strict deployment interfaces.
 
 This chapter is an annotated research pathway. Dates and evaluated scope are
 included because “state of the art” is meaningful only relative to a protocol.
@@ -49,17 +49,17 @@ What to study:
 What not to conclude: every robot can copy ANYmal's parameter values or reward
 weights. Morphology, actuator, sensor, rate, and task differ.
 
-Microduck's BAM XL330 model belongs to the same engineering tradition: train
-through a more realistic actuator interface instead of an unlimited ideal
-position source.
+Microduck's Better Actuator Models (BAM) XL330 model belongs to the same
+engineering tradition: train through a more realistic actuator interface
+instead of an unlimited ideal position source.
 
 ## 15.3 Milestone: massively parallel simulation
 
 The 2021
 [Learning to Walk in Minutes Using Massively Parallel Deep Reinforcement Learning](https://arxiv.org/abs/2109.11978)
 work showed that thousands of GPU-parallel environments can greatly reduce
-wall-clock PPO training time and introduced a game-inspired terrain curriculum.
-It accompanied the open
+wall-clock Proximal Policy Optimization (PPO) training time and introduced a
+game-inspired terrain curriculum. It accompanied the open
 [`legged_gym`](https://github.com/leggedrobotics/legged_gym) ecosystem.
 
 The important distinction is:
@@ -75,7 +75,8 @@ informative. It changes optimization dynamics too: batch size, update count,
 and policy lag must be understood.
 
 Microduck's 4,096 environments × 24 steps is this pattern applied through
-MuJoCo Warp and RSL-RL.
+MuJoCo Warp and the Robotic Systems Lab reinforcement learning (RSL-RL)
+library.
 
 ## 15.4 Open training stacks
 
@@ -85,14 +86,14 @@ Useful open projects occupy different layers:
 | --- | --- | --- |
 | [`rsl_rl`](https://github.com/leggedrobotics/rsl_rl) | robot-focused PPO and related training components | readable runner/algorithm/storage separation |
 | [`legged_gym`](https://github.com/leggedrobotics/legged_gym) | Isaac Gym locomotion environments | influential vectorized locomotion recipe; pin compatible versions |
-| [Isaac Lab](https://github.com/isaac-sim/IsaacLab) | Isaac Sim robot-learning framework | sensors, randomization, RL/imitation workflows |
+| [Isaac Lab](https://github.com/isaac-sim/IsaacLab) | Isaac Sim robot-learning framework | sensors, randomization, reinforcement learning (RL), and imitation workflows |
 | [`mjlab`](https://github.com/mujocolab/mjlab) | manager-based MuJoCo Warp robot learning | Microduck's environment layer |
 | [MuJoCo Playground](https://github.com/google-deepmind/mujoco_playground) | GPU-accelerated MuJoCo robot-learning suite | open locomotion, manipulation, vision, and sim-to-real examples |
 | [Genesis](https://github.com/Genesis-Embodied-AI/Genesis) | general robotics physics/simulation platform | alternative parallel simulator; inspect released features, not roadmap claims |
 
-These are not drop-in equivalents. Compare physics, renderer, task API,
-algorithm integration, supported hardware, license, version compatibility, and
-reproducibility before migrating.
+These are not drop-in equivalents. Compare physics, renderer, task application
+programming interface (API), algorithm integration, supported hardware,
+license, version compatibility, and reproducibility before migrating.
 
 The 2025
 [MuJoCo Playground paper](https://arxiv.org/abs/2502.08844) documents an open
@@ -125,7 +126,8 @@ Randomize uncertainty that exists and affects behavior:
 - link mass, inertia, and center of mass;
 - ground friction/restitution/compliance;
 - actuator gain, strength, friction, damping, delay, and voltage;
-- encoder/IMU bias, noise, mounting error, and dropout;
+- encoder/inertial measurement unit (IMU) bias, noise, mounting error, and
+  dropout;
 - command delay and control-period jitter;
 - initial state, terrain, disturbances, and payload.
 
@@ -189,7 +191,7 @@ off-policy learner.
 The non-negotiable audit is actor information at deployment. A simulator result
 with height-map truth does not prove a depth-camera student works.
 
-## 15.8 Online adaptation and RMA
+## 15.8 Online adaptation and Rapid Motor Adaptation (RMA)
 
 Fixed domain randomization asks one policy to be robust across all sampled
 physics. An adaptive system tries to infer the current environment.
@@ -221,7 +223,8 @@ Questions for a new robot:
 ## 15.9 Robust perceptive locomotion
 
 Proprioception tells what the robot feels now; **exteroception** senses the
-external environment before contact, using depth, LiDAR, or vision.
+external environment before contact, using depth, light detection and ranging
+(LiDAR), or vision.
 
 The 2022
 [Learning robust perceptive locomotion for quadrupedal robots in the wild](https://arxiv.org/abs/2201.08117)

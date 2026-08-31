@@ -1,8 +1,9 @@
 # 8. Software and Control Architecture
 
-An RL experiment is not just a neural network. It is a chain of models,
-interfaces, clocks, and artifacts. A policy can be mathematically correct and
-still fail if one link changes between training and deployment.
+A reinforcement learning (RL) experiment is not just a neural network. It is a
+chain of models, interfaces, clocks, and artifacts. A policy can be
+mathematically correct and still fail if one link changes between training and
+deployment.
 
 ## 8.1 The project stack
 
@@ -37,17 +38,18 @@ The major dependencies have distinct jobs:
 | Component | Responsibility |
 | --- | --- |
 | MuJoCo | rigid-body dynamics, joints, contacts, sensors |
-| MuJoCo Warp / Warp | CUDA/GPU-parallel simulation of many environments |
+| MuJoCo Warp / Warp | NVIDIA Compute Unified Device Architecture (CUDA) simulation across many graphics processing units (GPUs) |
 | `mjlab` | environment managers, task registry, vectorized wrapper, viewer, export support |
-| RSL-RL | PPO, neural networks, rollout buffers, checkpoints |
-| BAM (Better Actuator Models) | voltage-aware Dynamixel XL330 actuator and friction behavior |
+| Robotic Systems Lab reinforcement learning (RSL-RL) | Proximal Policy Optimization (PPO), neural networks, rollout buffers, checkpoints |
+| Better Actuator Models (BAM) | voltage-aware Dynamixel XL330 actuator and friction behavior |
 | this repository | Microduck robot models, tasks, rewards, randomization, tests, export and rehearsal |
-| Microduck runtime repository | real sensors, command sources, ONNX inference, motor communication |
+| Microduck runtime repository | real sensors, command sources, Open Neural Network Exchange (ONNX) inference, motor communication |
 
-MJCF is MuJoCo's XML-based robot/model description format. CUDA is NVIDIA's
-GPU-computing platform. ONNX (Open Neural Network Exchange) is a portable
-neural-network file format. **Inference** means running a frozen trained
-network to obtain an output; unlike training, it does not update weights.
+MuJoCo's Extensible Markup Language (XML) model format (MJCF) is its
+robot/model description format. CUDA is NVIDIA's GPU-computing platform. ONNX
+is a portable neural-network file format.
+**Inference** means running a frozen trained network to obtain an output;
+unlike training, it does not update weights.
 
 ## 8.2 Repository map as a learning map
 
@@ -77,12 +79,13 @@ logs/rsl_rl/<experiment>/<run>/      checkpoints, parameters, metrics, videos
 
 Read in dependency order. Start with the task registration, then its
 configuration factory, then follow only the custom functions it references
-into `mdp.py`. Reading all of the large MDP module from top to bottom is not a
-good beginner exercise.
+into `mdp.py`. A Markov Decision Process (MDP) organizes state, action,
+transition, reward, and discount; reading all of the large `mdp.py` module from
+top to bottom is not a good beginner exercise.
 
 ## 8.3 Task registration
 
-Every user-facing task ID binds four things:
+Every user-facing task **identifier (ID)** binds four things:
 
 ```python
 # Abridged from tasks/__init__.py
@@ -187,7 +190,7 @@ is less likely to fall outside the learned experience.
 
 - small additive sensor noise;
 - encoder bias;
-- IMU mounting variation;
+- inertial measurement unit (IMU) mounting variation;
 - delayed angular velocity, gravity, joint velocity, and actuation;
 - backlash-specific encoder views.
 
@@ -273,9 +276,9 @@ events.out...         local scalar logs
 videos/play/          finite recorded rollouts, when requested
 ```
 
-The resolved YAML is valuable. Source code may change after a run; the saved
-parameters show what the checkpoint actually trained against. Keep it with any
-policy you evaluate or deploy.
+The resolved YAML Ain't Markup Language (YAML) file is valuable. Source code
+may change after a run; the saved parameters show what the checkpoint actually
+trained against. Keep it with any policy you evaluate or deploy.
 
 ## 8.11 Lab: trace a task without training
 
@@ -309,9 +312,9 @@ Continue with
    command; `track_linear_velocity` reward; `nan_state` termination; and
    `action_rate_weight` curriculum. The important result is the path from
    factory to a named manager term, not memorizing these examples.
-4. Actor and critic both use hidden dimensions `(512, 256, 128)` with ELU
-   activation and observation normalization. Their inputs differ because the
-   critic may receive privileged observations.
+4. Actor and critic both use hidden dimensions `(512, 256, 128)` with an
+   exponential linear unit (ELU) activation and observation normalization.
+   Their inputs differ because the critic may receive privileged observations.
 5. Real ONNX inference deploys the actor and its actor-observation normalizer.
    The critic, reward/termination/event/curriculum managers, rollout storage,
    PPO losses, optimizer, and simulator randomization exist only to generate or

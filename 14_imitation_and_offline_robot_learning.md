@@ -13,7 +13,7 @@ D=\{(o_t,a_t,r_t,o_{t+1},d_t,m_t)\},
 ```
 
 where $m_t$ is optional metadata such as task language, camera calibration,
-timestamps, episode ID, or robot embodiment.
+timestamps, episode identifier (ID), or robot embodiment.
 
 Before selecting an algorithm, audit:
 
@@ -98,10 +98,11 @@ systems often use receding horizon: predict a chunk, execute a small prefix,
 observe again, and replan.
 
 The
-[ACT paper](https://arxiv.org/abs/2304.13705) uses action chunking with a
-transformer-style conditional variational autoencoder for low-cost bimanual
-manipulation. Its demonstration-based success should not be generalized to
-fast balance loops without latency and disturbance tests.
+[Action Chunking with Transformers (ACT) paper](https://arxiv.org/abs/2304.13705)
+uses action chunking with a transformer-style conditional variational
+autoencoder for low-cost bimanual manipulation. Its demonstration-based
+success should not be generalized to fast balance loops without latency and
+disturbance tests.
 
 ## 14.5 Diffusion Policy
 
@@ -139,7 +140,7 @@ across 12 tasks in four manipulation benchmarks and public code/data. Those
 results support the method in that protocol; they do not imply diffusion is
 required for all robots.
 
-## 14.6 Offline RL: improvement without new interaction
+## 14.6 Offline reinforcement learning (RL): improvement without new interaction
 
 Offline RL uses a fixed dataset but has rewards and sequential transitions. It
 tries to find a policy better than the data-collection behavior while avoiding
@@ -202,8 +203,9 @@ w(s,a)=\exp(\beta(Q(s,a)-V(s))),
 usually with clipping. Better-than-baseline dataset actions receive more
 weight.
 
-The [IQL paper](https://arxiv.org/abs/2110.06169) reports strong D4RL results
-and online fine-tuning. A beginner should retain the design principle: improve
+The [IQL paper](https://arxiv.org/abs/2110.06169) reports strong Datasets for
+Deep Data-Driven Reinforcement Learning (D4RL) results and online fine-tuning.
+A beginner should retain the design principle: improve
 toward the best supported data without trusting arbitrary unseen actions.
 
 ## 14.9 Dataset coverage is the real boundary

@@ -19,6 +19,29 @@ The generated release files are `dist/robot-rl-self-study.pdf` and its
 `dist/SHA256SUMS` integrity record. Intermediates in `build/` are intentionally
 ignored.
 
+## Semantic visual system
+
+The PDF palette is a learning interface, not decoration:
+
+| Style | Semantic role | Redundant non-color cue |
+| --- | --- | --- |
+| concept navy | chapters and conceptual subheadings | large sans-serif bold type and a chapter rule |
+| process teal | section navigation, links, page markers, table rules | heading level, placement, and rules |
+| answer amber on pale amber | expanded reference answers | explicit `REFERENCE ANSWER` label and banner |
+| blue-gray code panel | code, commands, data, and text diagrams | monospaced type, background, and frame |
+| equation navy | display equations | centered mathematical layout and surrounding whitespace |
+
+All text colors are deliberately dark on a white or very pale background. The
+validator requires every foreground/background pair to meet the
+[WCAG 2.2 normal-text contrast threshold of 4.5:1](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html);
+the current minimum is 6.16:1. Meaning does not depend on hue, so the edition
+remains usable in grayscale and for common color-vision differences. The
+source of truth is
+`pdf/latex-header.tex`; solution banners are emitted by
+`scripts/build_pdf.py`. When changing either, run the overflow/font
+validator and visually inspect a chapter opening, a code-heavy page, a wide
+table, an equation page, and a reference-answer page.
+
 ## Required commands and fonts
 
 The scripts require Python 3.10 or newer and these commands on `PATH`:

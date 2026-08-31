@@ -24,8 +24,9 @@ CPU MuJoCo rehearsal using deployment-style observations and commands
 14 joint targets at 50 Hz on Microduck
 ```
 
-The critic, reward functions, terminations, randomizers, and PPO optimizer are
-not deployed. Their job was to shape the actor during training.
+The critic, reward functions, terminations, randomizers, and Proximal Policy
+Optimization (PPO) optimizer are not deployed. Their job was to shape the actor
+during training.
 
 ## 12.2 Export through the mandatory path
 
@@ -47,7 +48,7 @@ uv run scripts/export.py Mjlab-Velocity-Flat-MicroDuck \
 
 The script:
 
-1. loads the play configuration for the exact task ID;
+1. loads the play configuration for the exact task identifier (ID);
 2. constructs the actor and critic architecture;
 3. restores the checkpoint;
 4. obtains the deterministic inference policy;
@@ -58,7 +59,7 @@ The script:
 Never hand-convert the checkpoint. In-simulator playback normalizes
 observations and can conceal a missing-normalizer deployment bug.
 
-## 12.3 Inspect the ONNX interface
+## 12.3 Inspect the Open Neural Network Exchange (ONNX) interface
 
 ```bash
 uv run python - <<'PY'
@@ -97,8 +98,9 @@ uv run scripts/infer_policy.py \
     --lin-vel-x 0.20
 ```
 
-This script runs ONNX Runtime on the CPU and builds the same observation order
-the robot runtime must build. It also applies action delay and maps actions as:
+This script runs ONNX Runtime on the central processing unit (CPU) and builds
+the same observation order the robot runtime must build. It also applies action
+delay and maps actions as:
 
 ```python
 observation = np.concatenate([
@@ -127,15 +129,15 @@ P                  apply a random push
 Q                  quit
 ```
 
-The body-pose UI exists for policy families that train those slots. The main
-velocity checkpoint has body-pose reward weight zero, so UI availability is
-not proof of learned body control.
+The body-pose user interface (UI) exists for policy families that train those
+slots. The main velocity checkpoint has body-pose reward weight zero, so UI
+availability is not proof of learned body control.
 
 ## 12.5 The exact 61D runtime contract
 
 | Slice | Values | Runtime source |
 | --- | ---: | --- |
-| base angular velocity | 3 | calibrated IMU, body frame, rad/s |
+| base angular velocity | 3 | calibrated inertial measurement unit (IMU), body frame, rad/s |
 | projected gravity | 3 | calibrated orientation projected into body frame |
 | relative joint position | 14 | servo encoders minus exact HOME offsets |
 | joint velocity | 14 | encoder-derived velocity in matching order/units |
@@ -196,9 +198,9 @@ P_{real}(s_{t+1}\mid s_t,a_t)
 
 Microduck reduces this gap with:
 
-- measured CAD geometry and mass properties;
-- the BAM voltage-controlled XL330 model;
-- friction, armature, mass/inertia, and CoM randomization;
+- measured computer-aided design (CAD) geometry and mass properties;
+- the Better Actuator Models (BAM) voltage-controlled XL330 model;
+- friction, armature, mass/inertia, and center of mass (CoM) randomization;
 - battery voltage and load-sag variation;
 - sensor noise, bias, IMU misalignment, and latency;
 - command delay;

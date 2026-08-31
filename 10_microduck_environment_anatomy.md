@@ -2,7 +2,7 @@
 
 An environment is an executable task specification. It defines what the robot
 can observe and do, how the world changes, what counts as progress, and which
-experience PPO collects.
+experience Proximal Policy Optimization (PPO) collects.
 
 This chapter uses `Mjlab-Velocity-Flat-MicroDuck` as the main worked example.
 
@@ -34,7 +34,8 @@ when an environment instance is constructed.
 
 The scene selects:
 
-- the robot MJCF and its initial state;
+- the robot's MuJoCo Extensible Markup Language (XML) model format (MJCF) file
+  and its initial state;
 - terrain;
 - collision rules;
 - contact and ray sensors;
@@ -69,7 +70,8 @@ joint_pos_action.scale = 1.0
 ```
 
 The action manager interprets each network output as an offset from the default
-joint pose. BAM then turns the position target into voltage/torque behavior.
+joint pose. Better Actuator Models (BAM) then turns the position target into
+voltage/torque behavior.
 
 Action design choices include:
 
@@ -234,7 +236,7 @@ Event terms run in modes:
 | Mode | Example |
 | --- | --- |
 | startup | foot friction, encoder bias fields, mass/inertia setup |
-| reset | root pose, joints, CoM, actuator friction scale, armature |
+| reset | root pose, joints, center of mass (CoM), actuator friction scale, armature |
 | interval | velocity pushes every few seconds |
 
 Domain randomization (DR) trains one policy over a distribution of plausible
@@ -245,7 +247,8 @@ robots:
 ```
 
 Microduck randomizes selected quantities such as friction, mass/inertia, CoM,
-battery voltage/sag, armature, encoder bias, IMU alignment, delays, and pushes.
+battery voltage/sag, armature, encoder bias, inertial measurement unit (IMU)
+alignment, delays, and pushes.
 
 DR is not a substitute for calibration. Zero-centered IMU orientation
 variation teaches tolerance to uncertain mounting magnitude; it cannot remove
@@ -258,7 +261,8 @@ distribution drifts outside the intended range during long training.
 ## 10.8 Terminations: the data-recycling question
 
 The velocity task can terminate for timeout, falling, terrain bounds, or a
-nonfinite state. A NaN guard checks joints, root state, and named sensor data:
+nonfinite state. A **not-a-number (NaN) guard** checks joints, root state, and
+named sensor data:
 
 ```python
 bad = ~torch.isfinite(data.joint_pos).all(dim=1)

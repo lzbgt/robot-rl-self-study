@@ -87,15 +87,17 @@ A useful baseline should be:
 Robot baselines can include:
 
 - zero/random policy for plumbing only;
-- hand-designed or PD controller;
-- MPC or state machine;
+- hand-designed or proportional–derivative (PD) controller;
+- Model Predictive Control (MPC) or state machine;
 - behavior cloning;
-- standard PPO/SAC implementation;
+- standard Proximal Policy Optimization (PPO) or Soft Actor-Critic (SAC)
+  implementation;
 - prior method with authors' configuration; and
 - an oracle using privileged information, clearly labeled as an upper bound.
 
-A new RL controller that has not beaten an accepted scripted balance baseline
-is not ready for hardware because its training reward is high.
+A new reinforcement learning (RL) controller that has not beaten an accepted
+scripted balance baseline is not ready for hardware because its training reward
+is high.
 
 ## 17.5 Ablation studies identify causes
 
@@ -104,7 +106,7 @@ fixed.
 
 Examples:
 
-- BAM actuator model on versus ideal actuator;
+- Better Actuator Models (BAM) actuator model on versus ideal actuator;
 - observation history 1 versus 4;
 - privileged critic on versus off;
 - action-rate curriculum versus full penalty from iteration 0;
@@ -117,8 +119,8 @@ lucky run with one unlucky run does not identify a cause.
 ## 17.6 Random seeds and uncertainty
 
 A seed initializes stochastic components: network weights, environment resets,
-commands, minibatch order, and sometimes GPU kernels. Deep RL can produce
-meaningfully different outcomes across seeds.
+commands, minibatch order, and sometimes graphics processing unit (GPU)
+kernels. Deep RL can produce meaningfully different outcomes across seeds.
 
 For returns $x_1,\ldots,x_n$, the sample mean is
 
@@ -185,7 +187,8 @@ the claim.
 Terminology varies by field, so define what you mean. In all cases preserve:
 
 - source commit and dirty diff;
-- lockfile/container and driver/CUDA versions;
+- lockfile/container and driver/NVIDIA Compute Unified Device Architecture
+  (CUDA) versions;
 - exact resolved environment/agent configuration;
 - seeds and command lines;
 - raw and aggregated metrics;
@@ -236,7 +239,8 @@ Commits, lockfiles, commands, configs, logs, checkpoints, videos, hashes.
 
 Goal: show you understand learning before deep networks.
 
-1. Modify `examples/tabular_q_learning.py` to implement SARSA.
+1. Modify `examples/tabular_q_learning.py` to implement
+   State–Action–Reward–State–Action (SARSA).
 2. Compare SARSA and Q-learning in a grid with a costly cliff.
 3. Sweep $\epsilon$ and three seeds.
 4. Plot or tabulate return, cliff entries, and convergence episodes.
@@ -255,7 +259,8 @@ Goal: connect the clipped objective to observed optimization.
 3. Predict the flat regions before running.
 4. In a small standard control environment, compare two clip values while
    holding seeds and budget fixed.
-5. Record approximate KL, entropy, return, and update stability.
+5. Record approximate Kullback–Leibler (KL) divergence, entropy, return, and
+   update stability.
 
 Deliverable: reproduction card explaining what clipping does and does not
 guarantee.
@@ -265,13 +270,14 @@ guarantee.
 Goal: demonstrate end-to-end robot-RL understanding without claiming a
 five-iteration policy is trained.
 
-1. run CPU tests and task registry;
+1. run central processing unit (CPU) tests and task registry;
 2. run a 64-environment, five-iteration smoke train;
 3. inspect resolved environment and agent configuration;
 4. play zero agent and one available checkpoint;
 5. classify the observation, action, command, and reward terms;
 6. export via the official normalizer-baking path;
-7. inspect ONNX shape and run CPU deployment rehearsal; and
+7. inspect Open Neural Network Exchange (ONNX) shape and run CPU deployment
+   rehearsal; and
 8. state why random-looking viewer direction is command sampling, why obstacles
    are not avoided, and why body-pose intent is not trained by the main recipe.
 
@@ -321,7 +327,7 @@ This capstone starts with evidence, not RL installation.
 
 - train bounded residual or command policy in simulation;
 - compare against the frozen baseline;
-- export a versioned model with schema and WCET;
+- export a versioned model with schema and worst-case execution time (WCET);
 - perform sim-to-sim, processor-in-loop, bench, tether, then floor gates.
 
 ### Phase 4: autonomy
@@ -329,7 +335,8 @@ This capstone starts with evidence, not RL installation.
 - onboard perception produces confidence-bearing world state;
 - local planner/behavior tree selects exact skills;
 - cloud agent proposes semantic plans only;
-- realtime MCU retains motor safety and network-loss response.
+- realtime microcontroller unit (MCU) retains motor safety and network-loss
+  response.
 
 Deliverable: signed gate evidence and rollback artifact at every phase. The
 project-specific handoff document in the Jump Rover repository contains the
@@ -426,7 +433,8 @@ claim without uncertainty does not.
 are a recorded watchdog stop bound and thermal envelope for hardware truth;
 held-out excitation error for the digital twin; matched-baseline success and
 processor-in-loop worst-case execution time for learning; and demonstrated
-safe behavior under cloud timeout, stale perception, and invalid skill IDs for
+safe behavior under cloud timeout, stale perception, and invalid skill
+identifiers (IDs) for
 autonomy. A cloud-generated plan is never evidence that the real-time motor
 safety layer works. Every gate must name its artifact and rollback version.
 

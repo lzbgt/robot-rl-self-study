@@ -1,8 +1,9 @@
 # 3. Bellman Methods: From Tables to Deep Q-Learning
 
-Before PPO, learn the simpler idea that organizes much of reinforcement
-learning: the value of a decision is its immediate reward plus the value of
-what follows. This is the **Bellman principle**.
+Before Proximal Policy Optimization (PPO), learn the simpler idea that
+organizes much of reinforcement learning: the value of a decision is its
+immediate reward plus the value of what follows. This is the **Bellman
+principle**.
 
 The tabular setting in this chapter is deliberately small. When every state and
 action can be listed, the algorithms expose their logic without a neural
@@ -194,7 +195,7 @@ V(S_t)\leftarrow4+0.1(2.4)=4.24.
 
 The experience was better than predicted, so the estimate rises.
 
-## 3.8 SARSA and Q-learning
+## 3.8 State–Action–Reward–State–Action (SARSA) and Q-learning
 
 SARSA is an on-policy TD control method. Its name lists the transition tuple:
 $S_t,A_t,R_{t+1},S_{t+1},A_{t+1}$. Its update target follows the action the
@@ -272,7 +273,8 @@ Continuous-control families handle this differently:
 - policy-gradient methods directly learn an action distribution;
 - deterministic actor-critic methods learn an actor that approximately
   maximizes the critic;
-- stochastic off-policy methods such as SAC optimize value plus entropy; and
+- stochastic off-policy methods such as Soft Actor-Critic (SAC) optimize value
+  plus entropy; and
 - model-based methods plan through known or learned dynamics.
 
 Microduck uses PPO because its simulator can generate large fresh on-policy
@@ -298,7 +300,7 @@ Bellman equations are written in terms of Markov state: all information needed
 to predict the future distribution. A deployed robot usually receives an
 observation $o_t$, not full state $s_t$. Hidden terrain compliance, actuator
 temperature, backlash, payload, and delayed contacts can make the problem a
-Partially Observable MDP (POMDP).
+Partially Observable Markov Decision Process (POMDP).
 
 Common responses are:
 
@@ -324,8 +326,9 @@ history.
 7. Give one hidden physical property that can make a robot observation
    non-Markov and one way to expose or infer it.
 
-Continue with [the RL algorithm map](04_rl_algorithm_families.md), where these
-dimensions become a practical selection framework.
+Continue with the [reinforcement-learning algorithm
+map](04_rl_algorithm_families.md), where these dimensions become a practical
+selection framework.
 
 ## 3.14 Folded solutions
 

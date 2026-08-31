@@ -7,11 +7,12 @@ question per experiment, and preserve tests/configuration with every result.
 
 Goal: prove that you can run and explain the existing system.
 
-1. Run all CPU tests.
+1. Run all central processing unit (CPU) tests.
 2. Run a 64-environment, five-iteration velocity smoke train.
 3. Load an existing trained velocity checkpoint.
 4. Record a 10-second rollout.
-5. Export ONNX and run the CPU rehearsal with a fixed forward command.
+5. Export Open Neural Network Exchange (ONNX) and run the CPU rehearsal with a
+   fixed forward command.
 6. Draw the 61D observation and 14D action layout from memory.
 
 Deliverable: the lab report template from Chapter 9 plus one paragraph
@@ -119,9 +120,10 @@ Choose the closest family:
 Implementation checklist:
 
 1. Write the task's observable success criterion and plausible exploits.
-2. Verify target states in physics before PPO.
+2. Verify target states in physics before Proximal Policy Optimization (PPO).
 3. Create `microduck_<name>_env_cfg.py` by building on the closest factory.
-4. Put custom MDP functions in `tasks/mdp.py`, grouped with the task.
+4. Put custom Markov Decision Process (MDP) functions in `tasks/mdp.py`, grouped
+   with the task.
 5. Preserve the 61D actor command layout and 14D action layout.
 6. Select the correct walk/all-collisions/roller model.
 7. Give the runner a distinct `experiment_name`.
@@ -240,7 +242,8 @@ Choose one subsystem, such as a single XL330 step response.
 
 1. Define a safe bench input and collect timestamped command, position,
    velocity, current/voltage, and load conditions.
-2. Replay the same input in the BAM testbench simulation.
+2. Replay the same input in the Better Actuator Models (BAM) testbench
+   simulation.
 3. Compare rise time, overshoot, steady-state error, and decay/friction.
 4. Fit a nominal parameter using training data.
 5. Validate it on a different input.

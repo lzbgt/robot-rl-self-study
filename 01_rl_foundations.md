@@ -25,22 +25,23 @@ Better Actuator Models (BAM) motor model + MuJoCo physics
 ```
 
 An **actuator** is the component that turns a command into physical force or
-motion; here it is a Dynamixel servo represented by BAM. During training,
-thousands of simulated robots execute this loop in parallel.
-During deployment, one real robot executes only the learned policy; PPO and the
-critic are no longer updating weights.
+motion; here it is a Dynamixel servo represented by Better Actuator Models
+(BAM). During training, thousands of simulated robots execute this loop in
+parallel. During deployment, one real robot executes only the learned policy;
+Proximal Policy Optimization (PPO) and the critic are no longer updating
+weights.
 
-## 1.2 RL compared with nearby ideas
+## 1.2 Reinforcement learning (RL) compared with nearby ideas
 
 Supervised learning starts with labeled examples such as “for this image, the
 answer is cat.” RL usually has no label saying “the correct 14 motor targets
 are these.” It has an objective, such as tracking velocity while staying
 upright, and must discover a sequence of actions.
 
-Classical control starts from an explicit model or error law, such as a PID
-controller. RL can learn a nonlinear controller where writing the full law by
-hand is difficult. Classical controllers remain valuable as baselines, safety
-layers, and inner loops.
+Classical control starts from an explicit model or error law, such as a
+proportional–integral–derivative (PID) controller. RL can learn a nonlinear
+controller where writing the full law by hand is difficult. Classical
+controllers remain valuable as baselines, safety layers, and inner loops.
 
 Planning chooses goals or sequences over a longer horizon. A walking policy is
 normally below planning: a planner asks for a local velocity, and the policy

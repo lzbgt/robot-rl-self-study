@@ -1,8 +1,8 @@
 # 11. Training, Evaluation, and Debugging
 
-Training is not “start PPO and wait.” A useful run is a controlled experiment
-with a hypothesis, resolved configuration, checkpoints, per-term metrics, and
-rollouts that test the intended behavior.
+Training is not “start Proximal Policy Optimization (PPO) and wait.” A useful
+run is a controlled experiment with a hypothesis, resolved configuration,
+checkpoints, per-term metrics, and rollouts that test the intended behavior.
 
 ## 11.1 The end-to-end loop
 
@@ -53,9 +53,9 @@ uv run train <TASK_ID> \
     --agent.max_iterations 5
 ```
 
-Do not combine reward redesign, new observations, stronger DR, a new robot
-model, and new PPO hyperparameters in one experiment. Even a successful result
-will not tell you which change mattered.
+Do not combine reward redesign, new observations, stronger domain randomization
+(DR), a new robot model, and new PPO hyperparameters in one experiment. Even a
+successful result will not tell you which change mattered.
 
 ## 11.3 Read the training dashboard in layers
 
@@ -64,11 +64,11 @@ will not tell you which change mattered.
 Check:
 
 - iteration advances;
-- simulation and learning FPS are plausible;
-- losses and KL are finite;
-- no NaN termination spike appears;
+- simulation and learning frames per second (FPS) are plausible;
+- losses and Kullback–Leibler (KL) divergence are finite;
+- no not-a-number (NaN) termination spike appears;
 - checkpoints continue to save; and
-- GPU memory remains stable.
+- graphics processing unit (GPU) memory remains stable.
 
 ### Layer 2: episode behavior
 
@@ -226,8 +226,8 @@ slice before widening.
 ### It camps at a waypoint
 
 Per-step waypoint rewards create local jackpots. For an episodic landing task,
-prefer a fixed final target with progress/landing shaping and let RL discover
-the path.
+prefer a fixed final target with progress/landing shaping and let reinforcement
+learning (RL) discover the path.
 
 ### It reaches the goal too fast and crashes
 
@@ -264,9 +264,10 @@ actuator voltage, friction, saturation, backlash
 command-slot writes
 ```
 
-In-sim playback applies the checkpoint normalizer and can hide an ONNX export
-mistake. Runtime all-zero commands can select “stand” when an application
-expected a trick flag. These interface failures look like bad learning.
+In-sim playback applies the checkpoint normalizer and can hide an Open Neural
+Network Exchange (ONNX) export mistake. Runtime all-zero commands can select
+“stand” when an application expected a trick flag. These interface failures
+look like bad learning.
 
 ## 11.9 Curriculum diagnosis
 
@@ -334,7 +335,8 @@ An acceptable answer names a reproducible case and separates facts from its
 next hypothesis. For example:
 
 ```text
-Task/checkpoint:       exact task + checkpoint SHA-256
+Task/checkpoint:       exact task + Secure Hash Algorithm 256-bit (SHA-256)
+                       checkpoint digest
 Evaluation battery:   20 fixed flat starts at +0.2 m/s; 20 turn-in-place cases
 Observed result:      18/20 forward successes; 14/20 turn successes
 Raw failure classes:  4 forward falls after direction reversal; 2 initial slips

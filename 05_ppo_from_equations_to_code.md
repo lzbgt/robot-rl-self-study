@@ -1,4 +1,4 @@
-# 5. PPO from Equations to Code
+# 5. Proximal Policy Optimization (PPO) from Equations to Code
 
 This chapter explains how Proximal Policy Optimization turns a batch of
 Microduck rollouts into improved actor and critic networks.
@@ -22,7 +22,7 @@ In the main velocity task:
 
 | Network | Input | Hidden layers | Output |
 | --- | ---: | --- | ---: |
-| Actor | 61 | 512 → 256 → 128, ELU | 14 action means |
+| Actor | 61 | 512 → 256 → 128, exponential linear unit (ELU) | 14 action means |
 | Critic | 76 | 512 → 256 → 128, ELU | 1 value estimate |
 
 The critic's extra information includes true base linear velocity and contact
@@ -57,7 +57,7 @@ critic expected. A negative advantage means it was worse. Policy-gradient
 learning increases the probability of positive-advantage actions and decreases
 the probability of negative-advantage actions.
 
-## 5.3 Temporal-difference error and GAE
+## 5.3 Temporal-difference error and Generalized Advantage Estimation (GAE)
 
 The one-step temporal-difference residual is:
 
@@ -124,10 +124,11 @@ new probability is 0.13. The ratio is 1.3. The unclipped objective is 2.6, but
 the clipped positive-advantage objective is $1.2\times2=2.4$. Increasing its
 probability further offers no clipped benefit for this sample.
 
-Clipping does not mathematically guarantee a small update. RSL-RL also tracks
-the approximate Kullback–Leibler (KL) divergence, a measure of how different
-the old and new action distributions are, and uses an adaptive learning-rate
-schedule with desired KL `0.01`. Gradient norm is capped at `1.0`.
+Clipping does not mathematically guarantee a small update. The Robotic Systems
+Lab reinforcement learning (RSL-RL) library also tracks the approximate
+Kullback–Leibler (KL) divergence, a measure of how different the old and new
+action distributions are, and uses an adaptive learning-rate schedule with
+desired KL `0.01`. Gradient norm is capped at `1.0`.
 
 ## 5.6 Value, entropy, and the combined update
 
@@ -204,10 +205,10 @@ Conceptually, each feature becomes:
 ```
 
 The running mean and variance are learned from training observations and saved
-in the checkpoint. The ONNX exporter includes the actor's normalizer in the
-graph. A hand-converted network that omits it receives a different numerical
-problem and may fail on hardware even if playback from the checkpoint looked
-correct.
+in the checkpoint. The Open Neural Network Exchange (ONNX) exporter includes
+the actor's normalizer in the graph. A hand-converted network that omits it
+receives a different numerical problem and may fail on hardware even if
+playback from the checkpoint looked correct.
 
 ## 5.9 The important hyperparameters in this repository
 

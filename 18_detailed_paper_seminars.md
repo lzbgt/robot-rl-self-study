@@ -4,8 +4,8 @@ This chapter is a guided reading course, not a list of fashionable titles. The
 selected works introduced ideas that materially shaped open robot-learning
 practice, provided unusually useful experimental evidence, or opened a major
 current direction. They span locomotion, world models, large-scale real-robot
-RL, imitation, cross-embodiment data, foundation policies, and language-guided
-planning.
+reinforcement learning (RL), imitation, cross-embodiment data, foundation
+policies, and language-guided planning.
 
 “Most impactful” is necessarily a judgment. The selection criteria are:
 
@@ -19,20 +19,22 @@ planning.
 For each seminar, read the paper itself after this guide. This chapter explains
 the map; it does not replace methods, appendices, or code.
 
-## 18.1 Seminar 1 — Massively parallel PPO for locomotion
+## 18.1 Seminar 1 — Massively parallel Proximal Policy Optimization (PPO) for locomotion
 
 ### Primary work
 
 - [Learning to Walk in Minutes Using Massively Parallel Deep Reinforcement Learning (2021)](https://arxiv.org/abs/2109.11978)
 - [Official `legged_gym`](https://github.com/leggedrobotics/legged_gym)
-- [Official RSL-RL](https://github.com/leggedrobotics/rsl_rl)
+- [Official Robotic Systems Lab reinforcement learning
+  (RSL-RL)](https://github.com/leggedrobotics/rsl_rl)
 
 ### The problem before the paper
 
 Legged locomotion policies could take hours or days to train, which made reward,
 curriculum, and dynamics experiments slow. Physics simulation was often split
-between CPU environments while neural-network updates ran on GPU, creating data
-movement and throughput bottlenecks.
+between central processing unit (CPU) environments while neural-network
+updates ran on a graphics processing unit (GPU), creating data movement and
+throughput bottlenecks.
 
 ### Central idea
 
@@ -86,7 +88,8 @@ projects.
 ### What it does not establish
 
 - PPO is always more sample efficient than off-policy methods.
-- Any 4,096-environment recipe fits an 8 GB GPU.
+- Any 4,096-environment recipe fits a graphics processing unit (GPU) with
+  8 gigabytes (GB) of memory.
 - A fast training curve transfers without actuator/system identification.
 - Reward and curriculum values copy across robot size or morphology.
 
@@ -122,7 +125,7 @@ This tests the throughput insight without pretending to reproduce ANYmal.
 
 ### Primary work
 
-- [RMA: Rapid Motor Adaptation for Legged Robots (2021)](https://arxiv.org/abs/2107.04034)
+- [Rapid Motor Adaptation (RMA) for Legged Robots (2021)](https://arxiv.org/abs/2107.04034)
 - [Official project page](https://ashish-kmr.github.io/rma-legged-robots/)
 
 ### The problem
@@ -256,9 +259,9 @@ The objective balances:
 3. make the predictive prior agree with the observation-informed posterior
    without collapsing the representation.
 
-The divergence term is commonly based on KL divergence. Here it asks how
-different two latent distributions are—not whether the robot's physical path is
-close in meters.
+The divergence term is commonly based on Kullback–Leibler (KL) divergence. Here
+it asks how different two latent distributions are—not whether the robot's
+physical path is close in meters.
 
 ### Imagination
 
@@ -308,7 +311,7 @@ out action sequences. Compare against a persistence baseline
 $\hat s_{t+1}=s_t$. This establishes whether learning dynamics adds signal
 before adding actor optimization.
 
-## 18.4 Seminar 4 — TD-MPC2: planning in a learned latent model
+## 18.4 Seminar 4 — Temporal Difference Learning for Model Predictive Control, second generation (TD-MPC2)
 
 ### Primary work
 
@@ -376,6 +379,10 @@ hurt through compounded model error and missed deadline.
 
 - [QT-Opt: Scalable Deep Reinforcement Learning for Vision-Based Robotic Manipulation (2018)](https://arxiv.org/abs/1806.10293)
 
+QT-Opt is the paper's method name, not a full term that the authors expand
+letter by letter. It combines learned Q-values with numerical action
+optimization, which is the mechanism worth remembering.
+
 ### Why this older paper remains important
 
 QT-Opt is an influential counterexample to the idea that robot policies must
@@ -433,7 +440,7 @@ optimization of the same learned/known Q surface. Measure solution quality
 versus Q evaluations. This isolates action optimization from the cost of
 training a deep visual Q-function.
 
-## 18.6 Seminar 6 — ACT and Diffusion Policy
+## 18.6 Seminar 6 — Action Chunking with Transformers (ACT) and Diffusion Policy
 
 ### Primary works
 
@@ -495,7 +502,7 @@ network to predict the noise (or an equivalent denoising target):
 ```math
 L(\theta)=
 \mathbb{E}_{x_0,k,\epsilon}
-\left[\|\epsilon-epsilon_\theta(x_k,o,k)\|^2\right].
+\left[\|\epsilon-\epsilon_\theta(x_k,o,k)\|^2\right].
 ```
 
 This is supervised generative modeling. It can retain distinct modes because
@@ -525,7 +532,7 @@ sequence modeling in its task family.
 
 On one official simulated task:
 
-1. train a one-step BC baseline;
+1. train a one-step behavior cloning (BC) baseline;
 2. train action chunks at two horizons;
 3. hold demonstration split and image encoder fixed;
 4. report task success and correction after an injected perturbation;
@@ -535,12 +542,12 @@ On one official simulated task:
 The research question is whether temporal/multimodal representation explains
 the improvement—not whether one method has a newer name.
 
-## 18.7 Seminar 7 — RT-1 and Open X-Embodiment
+## 18.7 Seminar 7 — Robotics Transformer 1 (RT-1) and Open X-Embodiment
 
 ### Primary works
 
 - [RT-1: Robotics Transformer for Real-World Control at Scale (2022)](https://arxiv.org/abs/2212.06817)
-- [Open X-Embodiment: Robotic Learning Datasets and RT-X Models (2023)](https://arxiv.org/abs/2310.08864)
+- [Open X-Embodiment: Robotic Learning Datasets and Robotics Transformer X (RT-X) Models (2023)](https://arxiv.org/abs/2310.08864)
 - [Official Open X-Embodiment repository](https://github.com/google-deepmind/open_x_embodiment)
 
 ### RT-1 question: does robot policy performance scale with diverse data?
@@ -591,7 +598,8 @@ The central hypothesis is positive transfer:
 \text{target-only training at comparable target data}.
 ```
 
-RT-X models adapt RT-1/RT-2-style policies to the combined data.
+RT-X models adapt the RT-1 and Robotics Transformer 2 (RT-2) policy families
+to the combined data.
 
 ### The hard part is normalization, not file concatenation
 
@@ -630,7 +638,7 @@ training. Compare target-only BC with joint pretraining plus target fine-tuning,
 matching target examples. Report per-task transfer, including negative
 transfer. A global average can hide one task getting worse.
 
-## 18.8 Seminar 8 — From RT-2 to open VLA and flow policies
+## 18.8 Seminar 8 — From RT-2 to open vision-language-action (VLA) and flow policies
 
 ### Primary works and artifacts
 
@@ -639,7 +647,7 @@ transfer. A global average can hide one task getting worse.
 - [OpenVLA (2024)](https://arxiv.org/abs/2406.09246) and [official code](https://github.com/openvla/openvla)
 - [$\pi_0$ (2024)](https://arxiv.org/abs/2410.24164) and [official `openpi`](https://github.com/Physical-Intelligence/openpi)
 - [$\pi_{0.5}$ (2025)](https://arxiv.org/abs/2504.16054)
-- [GR00T N1 (2025)](https://arxiv.org/abs/2503.14734) and [official code](https://github.com/NVIDIA/Isaac-GR00T)
+- [Generalist Robot 00 Technology (GR00T) N1 (2025)](https://arxiv.org/abs/2503.14734) and [official code](https://github.com/NVIDIA/Isaac-GR00T)
 - [SmolVLA (2025)](https://arxiv.org/abs/2506.01844) and [LeRobot](https://github.com/huggingface/lerobot)
 
 This is a fast-moving area. The purpose is to understand design axes, not name
@@ -678,15 +686,15 @@ Octo's scientific value includes open checkpoints/code and ablations on
 architecture/data choices. It frames a generalist policy as an initialization
 to fine-tune, not a universal zero-shot hardware controller.
 
-### OpenVLA: an open VLM-to-action recipe
+### OpenVLA: an open vision-language model (VLM)-to-action recipe
 
 OpenVLA starts from a pretrained language backbone and visual encoders, then
 trains on 970,000 Open X robot trajectories. It predicts discretized action
-tokens autoregressively. The 7B model makes modern VLA study possible outside
-the organizations that developed closed RT-2 models.
+tokens autoregressively. The 7-billion-parameter model makes modern VLA study
+possible outside the organizations that developed closed RT-2 models.
 
-Parameter-efficient fine-tuning such as LoRA updates low-rank matrices rather
-than every full weight matrix:
+Parameter-efficient fine-tuning such as Low-Rank Adaptation (LoRA) updates
+low-rank matrices rather than every full weight matrix:
 
 ```math
 W'=W+BA,
@@ -771,7 +779,7 @@ Record:
 | action | tokens, regression, diffusion/flow, horizon, frame, rate? |
 | adaptation | full fine-tune, LoRA, new head, frozen backbone? |
 | evaluation | same tasks, splits, cameras, demonstrations, trials? |
-| runtime | parameters, memory, average/WCET latency, asynchronous age? |
+| runtime | parameters, memory, average/worst-case execution time (WCET), asynchronous age? |
 | openness | code, weights, data, exact training recipe, robot adapter? |
 
 Never compare one paper's percentage directly to another without protocol
@@ -806,9 +814,10 @@ rather than replace, motor RL.
 
 ### SayCan: combine usefulness with affordance
 
-An LLM can score which skill description is linguistically useful for an
-instruction. A learned value/affordance function estimates whether the robot
-can successfully execute that skill in the current situation.
+A large language model (LLM) can score which skill description is
+linguistically useful for an instruction. A learned value/affordance function
+estimates whether the robot can successfully execute that skill in the current
+situation.
 
 For candidate skill $k$:
 
@@ -827,7 +836,7 @@ This is a powerful architecture lesson: semantic plausibility and physical
 feasibility are different estimators. Exact skill choices constrain the LLM's
 output space.
 
-### Code as Policies: language models compose APIs
+### Code as Policies: language models compose application programming interfaces (APIs)
 
 Instead of selecting one listed skill, a code-capable LLM writes programs that
 call perception and control APIs. Programs can express loops, geometry,
@@ -883,7 +892,7 @@ dock(dock_id)
 
 For “follow Bruce,” let a cloud agent propose
 `follow_person(track_id="person.bruce", ...)` only after local identity/
-consent resolution maps language to an exact track ID. Local perception updates
+consent resolution maps language to an exact track identifier (ID). Local perception updates
 the track; local planning checks obstacles; realtime control executes bounded
 motion. If any layer becomes invalid, `stop` remains local.
 
@@ -1048,7 +1057,8 @@ predetermined winning number—answer the research exercises.
    tail latency, observation age, in-distribution success, and held-out object/
    layout success.
 9. **Language planning:** construct exact skill IDs and local preconditions.
-   Evaluate LM relevance, affordance-only, and their product on present/absent
+   Evaluate language model (LM) relevance, affordance-only, and their product
+   on present/absent
    objects. Score invalid selection separately from execution failure and prove
    timeout/network loss retains local `stop`.
 10. **Perceptive locomotion:** progress from oracle geometry + existing velocity

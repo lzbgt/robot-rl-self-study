@@ -15,6 +15,69 @@ ROOT = Path(__file__).resolve().parents[1]
 PDF = ROOT / "dist" / "robot-rl-self-study.pdf"
 LOG = ROOT / "build" / "robot-rl-self-study.log"
 CHECKSUMS = ROOT / "dist" / "SHA256SUMS"
+LATEX_HEADER = ROOT / "pdf" / "latex-header.tex"
+COLOR_RE = re.compile(
+    r"\\definecolor\{([^}]+)\}\{HTML\}\{([0-9A-Fa-f]{6})\}"
+)
+
+
+def relative_luminance(hex_color: str) -> float:
+    """Return WCAG relative luminance for an sRGB hexadecimal color."""
+
+    channels = [int(hex_color[index : index + 2], 16) / 255 for index in (0, 2, 4)]
+    linear = [
+        channel / 12.92
+        if channel <= 0.04045
+        else ((channel + 0.055) / 1.055) ** 2.4
+        for channel in channels
+    ]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+def contrast_ratio(foreground: str, background: str) -> float:
+    """Return the WCAG contrast ratio for two hexadecimal sRGB colors."""
+
+    first = relative_luminance(foreground)
+    second = relative_luminance(background)
+    return (max(first, second) + 0.05) / (min(first, second) + 0.05)
+
+
+def check_semantic_palette() -> tuple[list[str], float]:
+    """Keep every text/background pairing above the normal-text threshold."""
+
+    if not LATEX_HEADER.exists():
+        return ["missing semantic style source: pdf/latex-header.tex"], 0.0
+    palette = dict(COLOR_RE.findall(LATEX_HEADER.read_text(encoding="utf-8")))
+    palette["PaperWhite"] = "FFFFFF"
+    pairs = (
+        ("BookInk", "PaperWhite"),
+        ("ConceptNavy", "PaperWhite"),
+        ("ProcessTeal", "PaperWhite"),
+        ("EquationNavy", "PaperWhite"),
+        ("LinkTeal", "PaperWhite"),
+        ("AnswerAmber", "AnswerTint"),
+        ("BookInk", "CodeTint"),
+        ("ConceptNavy", "CodeTint"),
+        ("ProcessTeal", "CodeTint"),
+        ("AnswerAmber", "CodeTint"),
+    )
+    errors: list[str] = []
+    ratios: list[float] = []
+    for foreground, background in pairs:
+        missing = [name for name in (foreground, background) if name not in palette]
+        if missing:
+            errors.append(
+                "semantic palette is missing color(s): " + ", ".join(missing)
+            )
+            continue
+        ratio = contrast_ratio(palette[foreground], palette[background])
+        ratios.append(ratio)
+        if ratio < 4.5:
+            errors.append(
+                f"{foreground} on {background} has {ratio:.2f}:1 contrast; "
+                "normal-size text requires at least 4.5:1"
+            )
+    return errors, min(ratios, default=0.0)
 
 
 def command(*args: str) -> str:
@@ -34,6 +97,8 @@ def command(*args: str) -> str:
 
 def main() -> int:
     errors: list[str] = []
+    palette_errors, minimum_contrast = check_semantic_palette()
+    errors.extend(palette_errors)
     for tool in ("pdfinfo", "pdftotext", "pdffonts"):
         if shutil.which(tool) is None:
             errors.append(f"missing validation tool: {tool} (install Poppler)")
@@ -67,7 +132,7 @@ def main() -> int:
     extracted = text_path.read_text(encoding="utf-8", errors="replace")
     required_text = (
         "Reinforcement Learning Foundations",
-        "PPO from Equations to Code",
+        "Proximal Policy Optimization (PPO) from Equations to Code",
         "Microduck",
         "Problem 1: observation dimensions",
         "Primary Sources and Open-Source Study Index",
@@ -75,6 +140,17 @@ def main() -> int:
     for phrase in required_text:
         if phrase not in extracted:
             errors.append(f"PDF text is missing expected section: {phrase!r}")
+    answer_banners = len(
+        re.findall(
+            r"^\s*REFERENCE ANSWER · CHECK AFTER ATTEMPTING\s*$",
+            extracted,
+            re.MULTILINE,
+        )
+    )
+    if answer_banners != 38:
+        errors.append(
+            f"PDF contains {answer_banners} reference-answer banners; expected 38"
+        )
 
     fonts = command("pdffonts", str(PDF))
     font_rows = [line for line in fonts.splitlines()[2:] if line.strip()]
@@ -104,7 +180,8 @@ def main() -> int:
         return report(errors)
     print(
         f"PDF_CHECK_OK: {page_count} pages, checksum, embedded fonts, expected "
-        "sections, and no TeX overflow warnings"
+        f"sections, semantic text contrast >= {minimum_contrast:.2f}:1, and no "
+        "TeX overflow warnings"
     )
     return 0
 

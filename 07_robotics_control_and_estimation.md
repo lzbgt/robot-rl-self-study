@@ -1,8 +1,9 @@
 # 7. Robot Dynamics, Control, and State Estimation
 
-An RL policy becomes a robot controller only through mechanics, electronics,
-sensors, timing, and lower-level control loops. This chapter supplies the
-robotics background needed to understand those interfaces.
+A reinforcement learning (RL) policy becomes a robot controller only through
+mechanics, electronics, sensors, timing, and lower-level control loops. This
+chapter supplies the robotics background needed to understand those
+interfaces.
 
 ## 7.1 Configuration and degrees of freedom
 
@@ -54,9 +55,10 @@ Read it term by term:
 - $\tau$: actuator torque;
 - $J(q)^TF_{ext}$: external/contact force mapped into joint torques.
 
-You do not need to symbolically solve this equation to train PPO. You do need
-to understand that mass, center of mass, inertia, friction, contact, voltage,
-and delay change how the same command moves the robot.
+You do not need to symbolically solve this equation to train Proximal Policy
+Optimization (PPO). You do need to understand that mass, center of mass,
+inertia, friction, contact, voltage, and delay change how the same command moves
+the robot.
 
 ## 7.4 Coordinate frames
 
@@ -67,7 +69,8 @@ Common frames are:
 
 - **world frame**: fixed to the environment;
 - **base/body frame**: moves with the trunk;
-- **sensor frame**: aligned with an IMU or camera mounting; and
+- **sensor frame**: aligned with an inertial measurement unit (IMU) or camera
+  mounting; and
 - **joint frame**: defined by the robot model's joint axis.
 
 A rotation matrix $R_{WB}$ can map a body-frame vector into world coordinates:
@@ -119,8 +122,8 @@ compliance, velocity dependence, surface variation, and wear.
 ## 7.7 Actuators are not ideal commands
 
 An **actuator** converts electrical energy into mechanical motion or force.
-Common robot actuators include DC/BLDC motors with transmissions and integrated
-servos.
+Common robot actuators include direct-current and brushless direct-current
+(BLDC) motors with transmissions and integrated servos.
 
 An ideal simulator position actuator instantly producing any required torque
 is physically impossible. Real behavior depends on:
@@ -134,7 +137,7 @@ is physically impossible. Real behavior depends on:
 - command/communication latency; and
 - thermal protection.
 
-### BAM in the Microduck project
+### Better Actuator Models (BAM) in the Microduck project
 
 **BAM** means **Better Actuator Models**, the actuator-modeling approach used
 by the project for Dynamixel XL330 servos. Here it refers to a voltage-aware
@@ -145,7 +148,7 @@ joint `dof_frictionloss` does not randomize the effective friction authority
 when BAM computes it inside the actuator. The project scales BAM's
 `friction_scale` instead.
 
-## 7.8 Feedback control and PD control
+## 7.8 Feedback control and proportional–derivative (PD) control
 
 A feedback controller compares a target to a measurement. A proportional-
 derivative (PD) joint controller is
@@ -175,7 +178,7 @@ An RL action need not equal motor current. Common choices are:
 | absolute joint position | interpretable | can jump if not rate-limited |
 | position delta from HOME | centered, normalized | target scale and HOME must match |
 | residual on nominal controller | bounded learning scope | nominal/residual interaction |
-| task-space target | meaningful geometry | needs IK/controller underneath |
+| task-space target | meaningful geometry | needs inverse kinematics (IK) or a controller underneath |
 
 Microduck uses 14 normalized actions that become joint-position targets around
 the default pose. The lower-level actuator dynamics turn targets into motion.
@@ -241,7 +244,7 @@ Typical inputs:
 - IMU gyroscope: angular velocity;
 - IMU accelerometer: specific force, including gravity effects;
 - contact/force sensors;
-- cameras, depth sensors, or LiDAR; and
+- cameras, depth sensors, or light detection and ranging (LiDAR); and
 - motor current/voltage/temperature.
 
 An estimator may use complementary filtering, a Kalman-filter family,

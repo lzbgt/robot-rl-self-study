@@ -46,6 +46,24 @@ LINK_RE = re.compile(r"(?<!!)\[([^\]]+)\]\(([^)]+)\)")
 CHAPTER_RE = re.compile(r"^(\d{2})_[a-z0-9_]+\.md$")
 
 
+def latex_escape(value: str) -> str:
+    """Escape plain HTML-summary text used as a LaTeX command argument."""
+
+    replacements = {
+        "\\": r"\textbackslash{}",
+        "{": r"\{",
+        "}": r"\}",
+        "%": r"\%",
+        "&": r"\&",
+        "#": r"\#",
+        "_": r"\_",
+        "$": r"\$",
+        "^": r"\textasciicircum{}",
+        "~": r"\textasciitilde{}",
+    }
+    return "".join(replacements.get(character, character) for character in value)
+
+
 def require_tools() -> None:
     missing = [name for name in ("pandoc", "xelatex") if shutil.which(name) is None]
     if missing:
@@ -85,30 +103,30 @@ def preprocess(source: Path) -> str:
 
     lines = source.read_text(encoding="utf-8").splitlines()
     output: list[str] = []
-    in_math = False
+    math_indent: str | None = None
 
     for number, line in enumerate(lines, start=1):
         stripped = line.strip()
         if stripped == "```math":
-            if in_math:
+            if math_indent is not None:
                 raise ValueError(f"{source.name}:{number}: nested math fence")
-            output.append("$$")
-            in_math = True
+            math_indent = line[: len(line) - len(line.lstrip())]
+            output.append(f"{math_indent}$$")
             continue
-        if in_math and stripped == "```":
-            output.append("$$")
-            in_math = False
+        if math_indent is not None and stripped == "```":
+            output.append(f"{math_indent}$$")
+            math_indent = None
             continue
         if stripped in {"<details>", "</details>"}:
             continue
         summary = SUMMARY_RE.match(stripped)
         if summary:
             title = html.unescape(summary.group(1)).strip()
-            output.extend((f"### {title}", ""))
+            output.extend((rf"\solutionheading{{{latex_escape(title)}}}", ""))
             continue
         output.append(line)
 
-    if in_math:
+    if math_indent is not None:
         raise ValueError(f"{source.name}: unclosed math fence")
 
     text = "\n".join(output).strip() + "\n"

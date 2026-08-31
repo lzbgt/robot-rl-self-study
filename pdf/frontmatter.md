@@ -30,6 +30,21 @@ official open-source projects behind the research chapters. Treat every
 state-of-the-art claim as scoped to its dated task, data, embodiment, and
 evaluation protocol.
 
+## Visual language in this PDF
+
+The PDF uses a restrained semantic color system to reduce search effort while
+studying. Color is never the only carrier of meaning: heading size, labels,
+frames, alignment, and whitespace repeat every cue, so the structure remains
+usable in grayscale and for readers with color-vision differences.
+
+| Visual cue | Meaning and study action |
+| --- | --- |
+| navy headings | a major idea or conceptual landmark; pause and restate it in your own words |
+| teal navigation | the current step in an explanation or workflow |
+| amber answer banner | revealed material; attempt the associated problem before reading further |
+| blue-gray panel | executable code, a command, data, or a diagram; trace it line by line |
+| navy display math | a mathematical model; name every symbol before manipulating it |
+
 ## Suggested routes
 
 - **Theory first:** Chapters 1–7, the four small programs in `examples/`, and
@@ -41,4 +56,3 @@ evaluation protocol.
 Do not measure progress by pages read. Advance when you can produce the
 deliverable at the end of a chapter and explain what observation, action,
 reward, data, and safety contract a robot-learning result actually used.
-

@@ -23,16 +23,18 @@ exported model + inference runtime
 hardware adapter + realtime safety
 ```
 
-One repository may cover several layers but rarely all of them. Installing an
-RL library does not provide a correct robot model; downloading a VLA checkpoint
-does not provide your camera calibration or action adapter.
+One repository may cover several layers but rarely all of them. Installing a
+reinforcement learning (RL) library does not provide a correct robot model;
+downloading a vision-language-action (VLA) checkpoint does not provide your
+camera calibration or action adapter.
 
 ## 19.2 Small general-RL learning tools
 
 ### Gymnasium
 
 - [Official repository](https://github.com/Farama-Foundation/Gymnasium)
-- Role: standardized environment API and classic/control benchmarks.
+- Role: standardized environment application programming interface (API) and
+  classic/control benchmarks.
 - Read: reset/step return values, termination versus truncation, spaces, and
   seeding.
 - Use: validate an algorithm idea cheaply before robot simulation.
@@ -42,7 +44,8 @@ does not provide your camera calibration or action adapter.
 - [Official repository](https://github.com/vwxyzjn/cleanrl)
 - Role: single-file deep-RL implementations designed for readability and
   reproducibility.
-- Read: one PPO or SAC file end to end; map each equation to a code block.
+- Read: one Proximal Policy Optimization (PPO) or Soft Actor-Critic (SAC) file
+  end to end; map each equation to a code block.
 - Caution: a concise benchmark implementation is not a robot deployment stack.
 
 ### Stable-Baselines3
@@ -52,9 +55,9 @@ does not provide your camera calibration or action adapter.
 - Use: establish a competent algorithm baseline on Gymnasium-compatible tasks.
 - Caution: defaults and wrappers are part of the experiment; inspect them.
 
-## 19.3 Locomotion and GPU simulation stacks
+## 19.3 Locomotion and graphics processing unit (GPU) simulation stacks
 
-### RSL-RL
+### Robotic Systems Lab reinforcement learning (RSL-RL)
 
 - [Official repository](https://github.com/leggedrobotics/rsl_rl)
 - Role: robot-focused runners, PPO and related algorithms, models, storage,
@@ -86,8 +89,8 @@ does not provide your camera calibration or action adapter.
   environment design, randomization, RL, and imitation workflows.
 - Study: manager-based versus direct environments, actuator configuration, and
   the current supported version matrix.
-- Caution: Isaac Sim, driver, CUDA, and extension versions form a large
-  compatibility surface.
+- Caution: Isaac Sim, driver, NVIDIA Compute Unified Device Architecture
+  (CUDA), and extension versions form a large compatibility surface.
 
 ### `legged_gym`
 
@@ -161,7 +164,8 @@ does not provide your camera calibration or action adapter.
 
 - [Official repository](https://github.com/google-deepmind/open_x_embodiment)
 - [Paper](https://arxiv.org/abs/2310.08864)
-- Role: standardized multi-institution robot datasets and RT-X study.
+- Role: standardized multi-institution robot datasets and Robotics Transformer
+  X (RT-X) study.
 - Study: embodiment/action transforms and dataset sampling weights.
 
 ### Octo
@@ -174,20 +178,21 @@ does not provide your camera calibration or action adapter.
 
 - [Official repository](https://github.com/openvla/openvla)
 - Role: open VLA code/checkpoints and fine-tuning path.
-- Study: visual encoder fusion, action tokenization, normalization, LoRA, and
-  inference serving.
+- Study: visual encoder fusion, action tokenization, normalization, Low-Rank
+  Adaptation (LoRA), and inference serving.
 
 ### `openpi`
 
 - [Official repository](https://github.com/Physical-Intelligence/openpi)
-- Role: official open implementations/checkpoints for $\pi_0$, FAST variants,
-  and $\pi_{0.5}$ support.
+- Role: official open implementations/checkpoints for $\pi_0$,
+  Frequency-space Action Sequence Tokenization (FAST) variants, and
+  $\pi_{0.5}$ support.
 - Study: `Observation`/action tensor specs, image masks, data transforms,
   normalization stats, action horizon, config, and serving.
 - Caution: the maintainers explicitly frame adaptation to new robots as an
   experiment, not a guaranteed drop-in result.
 
-### Isaac GR00T
+### Isaac Generalist Robot 00 Technology (GR00T)
 
 - [Official repository](https://github.com/NVIDIA/Isaac-GR00T)
 - [GR00T N1 paper](https://arxiv.org/abs/2503.14734)
@@ -202,7 +207,8 @@ does not provide your camera calibration or action adapter.
 - [Implementation in LeRobot](https://github.com/huggingface/lerobot)
 - Role: smaller VLA and asynchronous inference designed for more accessible
   training/deployment.
-- Study: observation age, action-chunk queueing, and actual CPU/GPU latency.
+- Study: observation age, action-chunk queueing, and actual central processing
+  unit (CPU)/GPU latency.
 
 ## 19.6 How to inspect an unfamiliar repository
 
@@ -266,7 +272,7 @@ Outcome: understand algorithm mechanics independent of robot complexity.
 2. Run a 64-environment/five-iteration PPO smoke.
 3. Trace one reward and observation through `mjlab` managers.
 4. Inspect RSL-RL rollout batch shape and PPO update counts.
-5. Export and run CPU ONNX rehearsal.
+5. Export and run CPU Open Neural Network Exchange (ONNX) rehearsal.
 6. Repeat one supported MuJoCo Playground task in a separate environment.
 7. Compare environment and deployment contracts, not reward numbers.
 
@@ -276,11 +282,12 @@ Outcome: understand a complete simulator-to-runtime motor-policy pipeline.
 
 1. Inspect one LeRobot dataset in a browser/tool without training.
 2. Write its schema/dataset card.
-3. Train a simple BC baseline on a small split.
+3. Train a simple behavior cloning (BC) baseline on a small split.
 4. Evaluate on fixed held-out episodes.
 5. Compare one-step versus chunked action prediction.
 6. Inject an observation perturbation and measure recovery.
-7. Only then try ACT, Diffusion Policy, or a VLA.
+7. Only then try Action Chunking with Transformers (ACT), Diffusion Policy, or
+   a VLA.
 
 Outcome: separate data quality/action representation from model scale.
 
@@ -304,7 +311,7 @@ Outcome: evaluate pretraining as a hypothesis rather than an identity.
 
 1. Create a simulator-only registry of exact, typed skills.
 2. Implement local preconditions and deterministic stop.
-3. Let an LLM rank/propose only registered skills.
+3. Let a large language model (LLM) rank/propose only registered skills.
 4. Add an affordance/feasibility score.
 5. Test absent objects, stale perception, conflicting instructions, timeout,
    and network loss.
@@ -344,7 +351,7 @@ This turns “I ran the GitHub project” into inspectable evidence.
 | learn demonstrations | LeRobot + BC | offline RL before dataset audit |
 | study lifelong transfer | LIBERO | claiming real-world generality from one split |
 | study VLA adaptation | Octo/OpenVLA/SmolVLA on supported benchmark | raw motor deployment |
-| study world models | DreamerV3 or TD-MPC2 official benchmark | long-horizon hardware planning first |
+| study world models | DreamerV3 or Temporal Difference Learning for Model Predictive Control, second generation (TD-MPC2), official benchmark | long-horizon hardware planning first |
 | study language planning | SayCan-style typed skill simulator | unrestricted generated code on robot |
 
 The smallest project that answers your question is the fastest route to genuine
@@ -373,7 +380,8 @@ before running it.
   fine-tuning; target-only BC and adaptation see the same target examples;
   model memory, tail latency/action age, in-distribution and held-out results,
   licenses, and failures are preserved.
-- **E — safe language planning:** the model can select only offered exact IDs;
+- **E — safe language planning:** the model can select only offered exact
+  identifiers (IDs);
   local schema/preconditions reject absent/stale cases; every effect has
   timeout/cancel/fallback; generated prose/code and raw motor values have zero
   execution authority.

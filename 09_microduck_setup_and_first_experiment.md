@@ -1,15 +1,17 @@
 # 9. Setup and First Experiment
 
 This chapter builds confidence in layers. Do not begin with a 20-hour training
-run. First prove the checkout, dependency lock, task registry, CPU tests, GPU
-simulation, short PPO loop, checkpoint load, and viewer.
+run. First prove the checkout, dependency lock, task registry, central
+processing unit (CPU) tests, graphics processing unit (GPU) simulation, short
+Proximal Policy Optimization (PPO) loop, checkpoint load, and viewer.
 
 ## 9.1 Requirements
 
 For local GPU training you need:
 
 - Linux;
-- a CUDA-capable NVIDIA GPU and working driver;
+- an NVIDIA Compute Unified Device Architecture (CUDA)-capable GPU and working
+  driver;
 - enough disk space for Python/CUDA packages and checkpoints;
 - Git; and
 - [`uv`](https://docs.astral.sh/uv/) for the locked Python 3.12 environment.
@@ -32,7 +34,8 @@ uv sync
 was manually installed into a developer's environment will be absent on a
 clean machine or remote job.
 
-On Linux AArch64, set a longer first-download timeout if needed:
+On Linux running the **64-bit Arm architecture (AArch64)**, set a longer
+first-download timeout if needed:
 
 ```bash
 export UV_HTTP_TIMEOUT=600
@@ -88,7 +91,7 @@ as:
 - the 61D observation family contract;
 - servo indices on roller/backlash models;
 - reward sign conventions;
-- NaN handling;
+- not-a-number (NaN) handling;
 - reset and curriculum wiring; and
 - task registration.
 
@@ -200,7 +203,7 @@ uv run play Mjlab-Velocity-Flat-MicroDuck \
 At 50 Hz, 500 policy steps represent 10 seconds of simulated behavior. The
 video is written under the checkpoint run's `videos/play/` directory.
 
-When comparing checkpoints, keep task ID, commands, random seed or evaluation
+When comparing checkpoints, keep the task identifier (ID), commands, random seed or evaluation
 battery, camera, and video length consistent.
 
 ## 9.10 Start a full run only after the smoke test
@@ -251,15 +254,16 @@ AArch64, preserve the repository's direct Torch pin and CUDA index routing.
 
 ### Viewer does not open
 
-Check `DISPLAY` on X11 or use a finite video/remote viewer appropriate to the
+Check `DISPLAY` on the X Window System version 11 (X11), or use a finite
+video/remote viewer appropriate to the
 machine. Do not interpret a display failure as a policy failure; first confirm
 the simulation process and checkpoint load.
 
 ### Observation-size mismatch
 
-The current family expects 61 actor inputs. A 51D legacy ONNX policy or a task
-that deleted command slots is incompatible. Use the correct checkpoint/task or
-intentionally version the runtime contract.
+The current family expects 61 actor inputs. A 51D legacy Open Neural Network
+Exchange (ONNX) policy or a task that deleted command slots is incompatible.
+Use the correct checkpoint/task or intentionally version the runtime contract.
 
 ### NaN during training
 
@@ -290,7 +294,8 @@ viewer or video result:
 first anomaly observed:
 ```
 
-This small report is the beginning of reproducible RL work.
+This small report is the beginning of reproducible reinforcement learning (RL)
+work.
 
 Continue with
 [the anatomy of a Microduck environment](10_microduck_environment_anatomy.md).
@@ -309,7 +314,8 @@ task ID:                Mjlab-Velocity-Flat-MicroDuck
 GPU and Torch/CUDA:     exact device / torch build / CUDA runtime
 command:                uv run train ... --num-envs 64 --max-iterations 5
 run directory:          logs/<experiment>/<timestamp-or-run>
-checkpoint:             exact model_*.pt and SHA-256
+checkpoint:             exact model_*.pt and Secure Hash Algorithm 256-bit
+                        (SHA-256) digest
 actor/action shapes:    61 / 14, confirmed from runtime output
 tests result:            N passed, M skipped; paste command and date
 smoke result:            completed 5 iterations; finite observations/rewards
