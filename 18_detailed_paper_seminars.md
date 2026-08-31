@@ -593,9 +593,11 @@ tasks/variations in the paper's terminology).
 The central hypothesis is positive transfer:
 
 ```math
-\text{target robot performance with multi-robot pretraining}
->
-\text{target-only training at comparable target data}.
+\begin{aligned}
+&\text{target-robot performance after multi-robot pretraining}\\
+&\qquad >
+\text{target-only performance at comparable target-data volume}.
+\end{aligned}
 ```
 
 RT-X models adapt the RT-1 and Robotics Transformer 2 (RT-2) policy families
