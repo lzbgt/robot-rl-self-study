@@ -73,6 +73,26 @@ def require_tools() -> None:
         )
 
 
+def pandoc_code_backend_option() -> str:
+    """Select the listings spelling supported by the installed Pandoc."""
+
+    help_result = subprocess.run(
+        ["pandoc", "--help"],
+        cwd=ROOT,
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env=BUILD_ENV,
+    )
+    if (
+        help_result.returncode == 0
+        and "--syntax-highlighting=" in help_result.stdout
+    ):
+        return "--syntax-highlighting=idiomatic"
+    return "--listings"
+
+
 def rewrite_link(match: re.Match[str], source: Path) -> str:
     """Make chapter links internal and other repository links web-accessible."""
 
@@ -189,7 +209,10 @@ def main() -> int:
             "--top-level-division=chapter",
             "--metadata-file=pdf/metadata.yaml",
             "--include-in-header=pdf/latex-header.tex",
-            "--syntax-highlighting=idiomatic",
+            # Pandoc 3.1 uses --listings; newer releases prefer the renamed
+            # idiomatic syntax-highlighting mode. Both emit LaTeX listings and
+            # let latex-header.tex own the semantic code-panel palette.
+            pandoc_code_backend_option(),
             "--output",
             str(TEX),
         ],
