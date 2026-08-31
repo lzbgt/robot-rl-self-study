@@ -822,11 +822,13 @@ situation.
 For candidate skill $k$:
 
 ```math
-\text{score}(k)
-\propto
-p_{LM}(k\mid\text{instruction, history})
-\times
-p_{afford}(\text{success}\mid s,k).
+\begin{aligned}
+\mathrm{score}(k)
+&\propto p_{\mathrm{LM}}
+  (k\mid\mathrm{instruction},\mathrm{history})\\
+&\quad\times p_{\mathrm{afford}}
+  (\mathrm{success}\mid s,k).
+\end{aligned}
 ```
 
 The product embodies “Say” times “Can.” A sponge-related skill may be useful
