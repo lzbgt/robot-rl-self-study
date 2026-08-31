@@ -20,7 +20,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install --no-install-recommends \
             pandoc texlive-xetex texlive-latex-extra \
-            texlive-fonts-recommended fonts-noto-core poppler-utils
+            texlive-fonts-recommended lmodern fonts-noto-core poppler-utils
       - name: Check Markdown, examples, and the complete PDF
         run: make check
       - name: Upload the verified PDF

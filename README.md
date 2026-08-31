@@ -198,7 +198,7 @@ On Ubuntu or in a GitHub Actions-compatible environment:
 
 ```bash
 sudo apt-get install pandoc texlive-xetex texlive-latex-extra \
-    texlive-fonts-recommended fonts-noto-core poppler-utils
+    texlive-fonts-recommended lmodern fonts-noto-core poppler-utils
 ```
 
 Then build and verify the complete book:

@@ -86,7 +86,7 @@ sudo apt-get update
 sudo apt-get install --no-install-recommends \
     python3 make pandoc \
     texlive-xetex texlive-latex-extra texlive-fonts-recommended \
-    fonts-noto-core poppler-utils
+    lmodern fonts-noto-core poppler-utils
 ```
 
 This is the setup executed by GitHub Actions on every push and pull request.
