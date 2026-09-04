@@ -5,6 +5,7 @@
 \usepackage{microtype}
 \usepackage{xurl}
 \usepackage{bookmark}
+\usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
@@ -17,6 +18,7 @@
 \usepackage{fancyhdr}
 \usepackage{needspace}
 \usepackage{titling}
+\usepackage{eso-pic}
 \usepackage{newunicodechar}
 
 % Semantic palette. AnswerAmber is intentionally reserved for material that a
@@ -50,22 +52,39 @@
   \everydisplay{\color{EquationNavy}}%
 }
 
-% A calm title page introduces the same concept/process colors used later.
-\pretitle{%
-  \begin{center}
-  \vspace*{2.2cm}
-  \sffamily\bfseries\color{ConceptNavy}\Huge
+% Keep the generated cover art separate from the typography: the image carries
+% the visual theme, while TeX keeps the title, subtitle, and author exact and
+% sharp at every zoom level. Defining \subtitle here makes Pandoc's later
+% \providecommand store it independently instead of appending it to \@title.
+\definecolor{CoverIvory}{HTML}{F4EFE3}
+\definecolor{CoverAmber}{HTML}{C9994B}
+\makeatletter
+\providecommand{\@subtitle}{}
+\providecommand{\subtitle}[1]{\gdef\@subtitle{#1}}
+\renewcommand{\maketitle}{%
+  \begin{titlepage}
+    \thispagestyle{empty}%
+    \AddToShipoutPictureBG*{%
+      \AtPageLowerLeft{%
+        \includegraphics[width=\paperwidth,height=\paperheight]{pdf/cover-art.png}%
+      }%
+    }%
+    \centering
+    \vspace*{5mm}%
+    {\color{CoverIvory}\rmfamily\bfseries\fontsize{30}{35}\selectfont
+      \@title\par}%
+    \vspace{5mm}%
+    {\color{CoverIvory}\sffamily\mdseries\fontsize{12.5}{16}\selectfont
+      \@subtitle\par}%
+    \vspace{31mm}%
+    {\color{CoverAmber}\rule{58mm}{0.9pt}\par}%
+    \vfill
+    {\color{CoverIvory}\sffamily\bfseries\fontsize{15}{19}\selectfont
+      \@author\par}%
+    \vspace*{-2mm}%
+  \end{titlepage}%
 }
-\posttitle{%
-  \par\vspace{0.9em}
-  {\color{ProcessTeal}\rule{0.68\linewidth}{1.2pt}}
-  \end{center}
-  \vspace{1.1em}
-}
-\preauthor{\begin{center}\sffamily\large\color{BookInk}}
-\postauthor{\par\end{center}}
-\predate{\begin{center}\sffamily\small\color{ProcessTeal}}
-\postdate{\par\end{center}}
+\makeatother
 
 % Heading hierarchy is a navigation aid: chapters and conceptual subheads use
 % navy, while section-level progress through a chapter uses teal. Size, weight,

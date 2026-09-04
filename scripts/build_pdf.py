@@ -34,8 +34,8 @@ BUILD_ENV = os.environ.copy()
 BUILD_ENV.update(
     {
         # TeX and xdvipdfmx honor this standard reproducible-build timestamp.
-        # It matches the edition date in metadata.yaml (2026-09-01 UTC).
-        "SOURCE_DATE_EPOCH": "1788220800",
+        # It matches the edition date in metadata.yaml (2026-09-04 UTC).
+        "SOURCE_DATE_EPOCH": "1788480000",
         "FORCE_SOURCE_DATE": "1",
         "TZ": "UTC",
     }

@@ -6,8 +6,8 @@ authors:
   - family-names: Lu
     given-names: Bruce
     alias: lzbgt
-version: 1.0.1
-date-released: 2026-09-01
+version: 1.0.2
+date-released: 2026-09-04
 license: Apache-2.0
 repository-code: "https://github.com/lzbgt/robot-rl-self-study"
 url: "https://github.com/lzbgt/robot-rl-self-study"

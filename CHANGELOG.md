@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.2 — 2026-09-04
+
+- Adds a formal, full-bleed technical cover with generated robot-learning
+  artwork and live TeX typography for the title, subtitle, and author.
+- Records the cover artwork's generation prompt, dimensions, and checksum, and
+  keeps the documented PDF build reproducible without adding a new TeX package
+  family.
+
 ## 1.0.1 — 2026-09-01
 
 - Splits two long display equations at semantic boundaries so the PDF has no

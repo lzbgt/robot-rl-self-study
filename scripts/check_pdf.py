@@ -16,6 +16,8 @@ PDF = ROOT / "dist" / "robot-rl-self-study.pdf"
 LOG = ROOT / "build" / "robot-rl-self-study.log"
 CHECKSUMS = ROOT / "dist" / "SHA256SUMS"
 LATEX_HEADER = ROOT / "pdf" / "latex-header.tex"
+COVER_ART = ROOT / "pdf" / "cover-art.png"
+COVER_PROVENANCE = ROOT / "pdf" / "cover-art.provenance.md"
 PDF_MARKDOWN = [
     ROOT / "pdf" / "frontmatter.md",
     *sorted(ROOT.glob("[0-9][0-9]_*.md")),
@@ -121,6 +123,23 @@ def main() -> int:
         if expected != f"{actual}  {PDF.name}":
             errors.append("dist/SHA256SUMS does not match the generated PDF")
 
+    if not COVER_ART.exists():
+        errors.append(f"missing cover artwork: {COVER_ART.relative_to(ROOT)}")
+    if not COVER_PROVENANCE.exists():
+        errors.append(
+            f"missing cover provenance: {COVER_PROVENANCE.relative_to(ROOT)}"
+        )
+    elif COVER_ART.exists():
+        provenance = COVER_PROVENANCE.read_text(encoding="utf-8")
+        recorded_digest = re.search(
+            r"^- SHA-256: `([0-9a-f]{64})`$", provenance, re.MULTILINE
+        )
+        actual_digest = hashlib.sha256(COVER_ART.read_bytes()).hexdigest()
+        if recorded_digest is None:
+            errors.append("cover provenance has no valid SHA-256 record")
+        elif recorded_digest.group(1) != actual_digest:
+            errors.append("cover artwork does not match its provenance SHA-256")
+
     info = command("pdfinfo", str(PDF))
     title = re.search(r"^Title:\s*(.+)$", info, re.MULTILINE)
     pages = re.search(r"^Pages:\s*(\d+)$", info, re.MULTILINE)
@@ -135,6 +154,16 @@ def main() -> int:
     text_path = ROOT / "build" / "robot-rl-self-study.txt"
     command("pdftotext", "-layout", str(PDF), str(text_path))
     extracted = text_path.read_text(encoding="utf-8", errors="replace")
+    cover_text = command(
+        "pdftotext", "-f", "1", "-l", "1", "-layout", str(PDF), "-"
+    )
+    for phrase in (
+        "Robot Reinforcement Learning",
+        "From First Principles to Real Robots",
+        "Bruce Lu",
+    ):
+        if phrase not in cover_text:
+            errors.append(f"PDF cover is missing expected text: {phrase!r}")
     required_text = (
         "Reinforcement Learning Foundations",
         "Proximal Policy Optimization (PPO) from Equations to Code",
@@ -202,9 +231,9 @@ def main() -> int:
     if errors:
         return report(errors)
     print(
-        f"PDF_CHECK_OK: {page_count} pages, checksum, embedded fonts, expected "
-        f"sections, semantic text contrast >= {minimum_contrast:.2f}:1, and no "
-        "TeX overflow warnings"
+        f"PDF_CHECK_OK: {page_count} pages, release and cover checksums, cover "
+        f"text, embedded fonts, expected sections, semantic text contrast >= "
+        f"{minimum_contrast:.2f}:1, and no TeX overflow warnings"
     )
     return 0
 

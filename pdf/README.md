@@ -6,12 +6,16 @@ entire build implementation and configuration live in this repository:
 - `scripts/build_pdf.py` combines the front matter, 20 chapters, and source
   index; converts fenced `math` blocks for Pandoc; expands folded solutions;
   and runs three XeLaTeX passes;
+- `cover-art.png` supplies the generated full-bleed cover background, with its
+  generation record in `cover-art.provenance.md`; the title, subtitle, and
+  author remain live TeX text for exact spelling and resolution-independent
+  rendering;
 - `metadata.yaml` defines the book metadata, A4 page geometry, and fonts;
-- `latex-header.tex` defines code wrapping, URL breaking, table layout, glyph
-  handling, and table-of-contents widths;
-- `scripts/check_pdf.py` rejects incomplete books, missing sections,
-  unembedded fonts, missing glyphs, unresolved references, and horizontal or
-  vertical TeX overflow; and
+- `latex-header.tex` defines the cover composition, code wrapping, URL
+  breaking, table layout, glyph handling, and table-of-contents widths;
+- `scripts/check_pdf.py` rejects incomplete books, missing cover text, stale
+  cover provenance, missing sections, unembedded fonts, missing glyphs,
+  unresolved references, and horizontal or vertical TeX overflow; and
 - `../.github/workflows/book-check.yml` installs a clean Ubuntu environment,
   runs the complete build/check pipeline, and uploads the PDF as an artifact.
 
